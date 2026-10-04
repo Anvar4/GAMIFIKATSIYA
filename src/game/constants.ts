@@ -161,8 +161,8 @@ export const QUESTION_TYPES: Record<QuestionType, { label: string; playable: boo
   image_identification: { label: 'Rasmli savol', playable: true },
   short_answer: { label: 'Qisqa javob / raqamli qulf', playable: true },
   logical_puzzle: { label: 'Mantiqiy masala', playable: true },
-  matching: { label: 'Moslashtirish (tez orada)', playable: false },
-  multi_step: { label: 'Koʻp bosqichli (tez orada)', playable: false },
+  matching: { label: 'Moslashtirish (juftliklar)', playable: true },
+  multi_step: { label: 'Koʻp bosqichli zanjir', playable: true },
 };
 
 export const DIFFICULTIES: Record<Difficulty, { label: string; color: string }> = {

@@ -141,8 +141,39 @@ export interface TeamAbility {
 }
 
 export interface InputSpec {
-  kind: 'code' | 'text';
+  kind: 'code' | 'text' | 'matching' | 'multi_step';
+  /** raqamli qulf uzunligi (kind = 'code') */
   length?: number;
+  /** moslashtirish: oʻng ustundagi aralashtirilgan javoblar (kind = 'matching') */
+  choices?: string[];
+  /** koʻp bosqichli zanjirdagi qadamlar soni (kind = 'multi_step') */
+  steps?: number;
+}
+
+/** Koʻp bosqichli savolning bitta qadami */
+export interface StepItem {
+  text: string;
+  options: string[];
+}
+
+/** Savol variantlari: oddiy savollarda matnlar, koʻp bosqichli savolda qadamlar */
+export type QuestionOptions = string[] | StepItem[];
+
+/** Toʻgʻri javob: variant indeksi, qabul qilinadigan matnlar / oʻng ustun yoki qadam indekslari */
+export type CorrectAnswer = number | string[] | number[];
+
+/** Oʻquvchining koʻp bosqichli zanjirdagi holati (faqat oʻziga) */
+export interface MyStepsState {
+  total: number;
+  finished: boolean;
+  done: { index: number; selected: number; correct: boolean }[];
+  current: { index: number; text: string; options: string[] } | null;
+}
+
+export interface StepProgress {
+  player_id: string;
+  done: number;
+  correct: number;
 }
 
 export interface TeamQuestionResult {
@@ -186,12 +217,14 @@ export interface QuestionPayload {
   deadline: string | null;
   closed_at: string | null;
   answer_count: number;
-  correct_answer: number | string[] | null;
+  correct_answer: CorrectAnswer | null;
   explanation: string | null;
   results: { teams: Record<string, TeamQuestionResult>; attacks: AttackResult[] } | null;
+  /** koʻp bosqichli savol qadamlari (oʻquvchiga faqat ochilgandan keyin) */
+  steps?: StepItem[] | null;
   /** faqat oʻqituvchi snapshot'ida */
   secret?: {
-    correct_answer: number | string[];
+    correct_answer: CorrectAnswer;
     explanation: string;
     hint: string;
     subject: string;
@@ -209,6 +242,8 @@ export interface AnswerRow {
   response_ms: number;
   is_correct: boolean | null;
   awarded_points: number;
+  /** ball ulushi 0..1 (qisman toʻgʻri javoblar uchun) */
+  credit?: number | null;
 }
 
 export interface MyAnswer {
@@ -217,6 +252,7 @@ export interface MyAnswer {
   response_ms: number;
   is_correct: boolean | null;
   awarded_points: number | null;
+  credit?: number | null;
 }
 
 export interface GameEvent {
@@ -244,8 +280,8 @@ export interface PlanItem {
   category: string;
   difficulty: Difficulty;
   image_url: string | null;
-  options: string[];
-  correct_answer: number | string[];
+  options: QuestionOptions;
+  correct_answer: CorrectAnswer;
   answer_count: number;
 }
 
@@ -342,7 +378,11 @@ export interface RoomSnapshot {
   question: QuestionPayload | null;
   answered_player_ids: string[];
   my_answer: MyAnswer | null;
+  /** koʻp bosqichli savolda oʻquvchining zanjir holati */
+  my_steps?: MyStepsState | null;
   answers: AnswerRow[];
+  /** koʻp bosqichli savolda oʻquvchilar progressi (faqat oʻqituvchiga) */
+  step_progress?: StepProgress[];
   hints: { team_id: string; hint: string }[];
   ability_requests: AbilityRequest[];
   plan: PlanItem[] | RoundProgress[];
@@ -369,8 +409,8 @@ export interface QuestionRecord {
   difficulty: Difficulty;
   question_type: QuestionType;
   question_text: string;
-  options: string[];
-  correct_answer: number | string[];
+  options: QuestionOptions;
+  correct_answer: CorrectAnswer;
   explanation: string;
   hint: string;
   image_url: string | null;

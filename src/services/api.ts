@@ -134,5 +134,15 @@ export const submitAnswer = (c: SupabaseClient, gqId: string, answer: string) =>
     p_gq: gqId,
     p_answer: answer,
   });
+/** Koʻp bosqichli savol: bitta qadam javobi (server keyingi qadamni faqat toʻgʻri javobdan keyin beradi) */
+export const submitStep = (c: SupabaseClient, gqId: string, step: number, answer: string) =>
+  call<{
+    accepted: boolean;
+    duplicate?: boolean;
+    correct?: boolean;
+    finished?: boolean;
+    auto_closed?: boolean;
+    next?: { index: number; text: string; options: string[] } | null;
+  }>(c, 'submit_step', { p_gq: gqId, p_step: step, p_answer: answer });
 export const requestAbility = (c: SupabaseClient, roomId: string, ability: AbilityType) =>
   call<{ created: boolean; message?: string }>(c, 'request_ability', { p_room: roomId, p_ability: ability });

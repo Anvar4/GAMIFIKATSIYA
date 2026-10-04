@@ -1,6 +1,7 @@
 // Savollarni Excel (.xlsx), CSV va JSON fayllaridan import/eksport qilish.
 // Shablon ustunlari public/templates/IT_ARENA_savollar_shabloni.xlsx bilan bir xil.
-import type { Difficulty, QuestionInput, QuestionRecord, QuestionType } from '../game/types';
+import type { Difficulty, QuestionInput, QuestionRecord, QuestionType, StepItem } from '../game/types';
+import { matchingPairs, stepItems, stringOptions } from '../game/questionShape';
 
 export const TEMPLATE_COLUMNS = [
   { key: 'subject', header: 'Fan', width: 14 },
@@ -217,11 +218,42 @@ function buildQuestion(get: (k: ColumnKey) => string, defaults: ImportDefaults):
   if (type === 'image_identification' && !image) throw new Error('Rasmli savol uchun “Rasm havolasi” kerak');
 
   const correctRaw = get('correct');
-  if (!correctRaw) throw new Error('“Toʻgʻri javob” ustuni boʻsh');
+  if (!correctRaw && type !== 'matching') throw new Error('“Toʻgʻri javob” ustuni boʻsh');
 
-  let finalOptions: string[] = options;
-  let correct: number | string[];
-  if (type === 'true_false') {
+  let finalOptions: QuestionInput['options'] = options;
+  let correct: QuestionInput['correct_answer'];
+  if (type === 'matching') {
+    // har bir variant katagi: "Chap = Oʻng" (yoki "Chap → Oʻng")
+    const pairs = options.map((cell, i) => {
+      const m = cell.split(/\s*(?:=|→|->|=>)\s*/);
+      if (m.length !== 2 || !m[0] || !m[1]) throw new Error(`${'ABCD'[i]} variant “Chap = Oʻng” koʻrinishida boʻlishi kerak`);
+      return { left: m[0], right: m[1] };
+    });
+    if (pairs.length < 2) throw new Error('Moslashtirish uchun kamida 2 ta juftlik kerak (A va B)');
+    if (new Set(pairs.map((p) => norm(p.right))).size < 2) throw new Error('Oʻng ustunda kamida 2 xil javob boʻlishi kerak');
+    finalOptions = pairs.map((p) => p.left);
+    correct = pairs.map((p) => p.right);
+  } else if (type === 'multi_step') {
+    // har bir variant katagi — bitta qadam: "Qadam matni || 1-variant | 2-variant | 3-variant"
+    const steps: StepItem[] = options.map((cell, i) => {
+      const [text, rest] = cell.split(/\s*\|\|\s*/);
+      const opts = (rest ?? '').split(/\s*\|\s*/).filter(Boolean);
+      if (!text || opts.length < 2 || opts.length > 4) {
+        throw new Error(`${i + 1}-qadam “Matn || variant | variant” koʻrinishida boʻlishi kerak (2–4 variant)`);
+      }
+      return { text, options: opts };
+    });
+    if (steps.length < 2) throw new Error('Zanjirda kamida 2 ta qadam kerak (A va B kataklari)');
+    const letters = correctRaw.split(/[\s,;]+/).filter(Boolean);
+    if (letters.length !== steps.length) throw new Error(`“Toʻgʻri javob” ustunida har bir qadam uchun harf boʻlsin (masalan: A, B, A)`);
+    correct = letters.map((l, i) => {
+      const idx = parseChoiceIndex(l, steps[i].options);
+      if (idx === null || idx >= steps[i].options.length) throw new Error(`${i + 1}-qadamning toʻgʻri javobi “${l}” notoʻgʻri`);
+      return idx;
+    });
+    if (steps.some((st) => st.options.some((o) => o.length > 200) || st.text.length > 300)) throw new Error('Qadam matni yoki varianti juda uzun');
+    finalOptions = steps;
+  } else if (type === 'true_false') {
     finalOptions = ['Toʻgʻri', 'Notoʻgʻri'];
     const idx = parseTrueFalse(correctRaw);
     if (idx === null) throw new Error('Toʻgʻri/Notoʻgʻri savolida javob “Toʻgʻri” yoki “Notoʻgʻri” boʻlishi kerak');
@@ -242,7 +274,7 @@ function buildQuestion(get: (k: ColumnKey) => string, defaults: ImportDefaults):
     }
     correct = idx;
   }
-  if (finalOptions.some((o) => o.length > 200)) throw new Error('Variant matni 200 belgidan oshmasligi kerak');
+  if (stringOptions(finalOptions).some((o) => o.length > 200)) throw new Error('Variant matni 200 belgidan oshmasligi kerak');
 
   const round = parseIntInRange(get('round'), 1, 5);
   const defaultsForRound = ROUND_DEFAULTS[round ?? 1];
@@ -285,12 +317,10 @@ export function jsonToQuestions(data: unknown, defaults: ImportDefaults): Import
   list.forEach((item, i) => {
     const q = item as Partial<QuestionRecord>;
     try {
-      const options = Array.isArray(q.options) ? q.options.map((o) => String(o)) : [];
-      const letters = ['A', 'B', 'C', 'D'];
-      let correct = '';
-      if (q.question_type === 'short_answer') correct = (Array.isArray(q.correct_answer) ? q.correct_answer : [String(q.correct_answer ?? '')]).join(';');
-      else if (q.question_type === 'true_false') correct = Number(q.correct_answer) === 0 ? 'Toʻgʻri' : 'Notoʻgʻri';
-      else correct = letters[Number(q.correct_answer)] ?? String(q.correct_answer ?? '');
+      const cells = questionCells(q.question_type as QuestionType, q.options, q.correct_answer);
+      const options = cells.options;
+      const correct = cells.correct;
+      if (options.length > 4) throw new Error('Importda koʻpi bilan 4 ta variant / juftlik / qadam boʻlishi mumkin (A–D)');
       const values: Record<ColumnKey, string> = {
         subject: String(q.subject ?? ''),
         grade: q.grade ? String(q.grade) : '',
@@ -356,14 +386,29 @@ export function parseCsv(text: string): string[][] {
 }
 
 /** Savolni shablon qatoriga aylantirish (Excel/CSV eksport uchun) */
-export function questionToRow(q: QuestionInput): string[] {
+/** Savolning variant kataklari (A–D) va “Toʻgʻri javob” katagi — Excel/CSV formatida */
+export function questionCells(type: QuestionType | undefined, rawOptions: unknown, rawCorrect: unknown): { options: string[]; correct: string } {
   const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
-  const isTf = q.question_type === 'true_false';
-  const options = isTf ? [] : q.options;
-  let correct = '';
-  if (q.question_type === 'short_answer') correct = (q.correct_answer as string[]).join('; ');
-  else if (isTf) correct = Number(q.correct_answer) === 0 ? 'Toʻgʻri' : 'Notoʻgʻri';
-  else correct = letters[Number(q.correct_answer)] ?? '';
+  if (type === 'matching') {
+    return { options: matchingPairs(rawOptions, rawCorrect).map((p) => `${p.left} = ${p.right}`), correct: '' };
+  }
+  if (type === 'multi_step') {
+    const answers = Array.isArray(rawCorrect) ? rawCorrect.map(Number) : [];
+    return {
+      options: stepItems(rawOptions).map((st) => `${st.text} || ${st.options.join(' | ')}`),
+      correct: answers.map((a) => letters[a] ?? '?').join(', '),
+    };
+  }
+  if (type === 'true_false') return { options: [], correct: Number(rawCorrect) === 0 ? 'Toʻgʻri' : 'Notoʻgʻri' };
+  if (type === 'short_answer') {
+    return { options: [], correct: (Array.isArray(rawCorrect) ? rawCorrect : [String(rawCorrect ?? '')]).map(String).join('; ') };
+  }
+  const options = Array.isArray(rawOptions) ? rawOptions.map((o) => String(o)) : [];
+  return { options, correct: letters[Number(rawCorrect)] ?? String(rawCorrect ?? '') };
+}
+
+export function questionToRow(q: QuestionInput): string[] {
+  const { options, correct } = questionCells(q.question_type, q.options, q.correct_answer);
   return [
     q.subject,
     q.grade ? String(q.grade) : '',

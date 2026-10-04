@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
-import { ImagePlus, Plus, Trash2 } from 'lucide-react';
+import { ArrowRight, ImagePlus, Plus, Trash2 } from 'lucide-react';
 import { Modal, Spinner } from '../../components/ui/Basics';
 import { OPTION_LETTERS, QuestionImage } from '../../components/game/QuestionCard';
 import { DIFFICULTIES, QUESTION_TYPES, GRADES, DEFAULT_SUBJECTS, roundMeta } from '../../game/constants';
 import type { Difficulty, QuestionInput, QuestionRecord, QuestionType } from '../../game/types';
+import { matchingPairs, stepItems, stringOptions } from '../../game/questionShape';
 import { getInstructorClient } from '../../lib/supabase';
 import { uploadQuestionImage } from '../../services/questions';
 import { errorMessage } from '../../lib/errors';
@@ -43,11 +44,24 @@ export function validateQuestion(q: QuestionInput): string | null {
   if (!q.category.trim()) return 'Mavzuni kiriting';
   if (!q.subject.trim()) return 'Fanni kiriting';
   if (q.question_type === 'short_answer') {
-    if (!Array.isArray(q.correct_answer) || q.correct_answer.filter((a) => a.trim()).length === 0) return 'Kamida bitta toʻgʻri javob kiriting';
-  } else if (q.question_type === 'matching' || q.question_type === 'multi_step') {
-    return 'Bu savol turi hozircha oʻyinda qoʻllab-quvvatlanmaydi';
+    if (!Array.isArray(q.correct_answer) || q.correct_answer.filter((a) => String(a).trim()).length === 0) return 'Kamida bitta toʻgʻri javob kiriting';
+  } else if (q.question_type === 'matching') {
+    const pairs = matchingPairs(q.options, q.correct_answer);
+    if (pairs.length < 2 || pairs.length > 4) return 'Moslashtirish uchun 2 dan 4 gacha juftlik kiriting';
+    if (pairs.some((p) => !p.left.trim() || !p.right.trim())) return 'Barcha juftliklarni toʻliq toʻldiring';
+    if (new Set(pairs.map((p) => p.right.trim().toLowerCase())).size < 2) return 'Oʻng ustunda kamida 2 xil javob boʻlsin';
+  } else if (q.question_type === 'multi_step') {
+    const steps = stepItems(q.options);
+    const answers = Array.isArray(q.correct_answer) ? q.correct_answer.map(Number) : [];
+    if (steps.length < 2 || steps.length > 4) return 'Zanjirda 2 dan 4 gacha qadam boʻlsin';
+    for (let i = 0; i < steps.length; i++) {
+      if (steps[i].text.trim().length < 2) return `${i + 1}-qadam matnini kiriting`;
+      const opts = steps[i].options.map((o) => o.trim());
+      if (opts.length < 2 || opts.length > 4 || opts.some((o) => !o)) return `${i + 1}-qadam variantlarini toʻldiring (2–4 ta)`;
+      if (!(answers[i] >= 0 && answers[i] < opts.length)) return `${i + 1}-qadamning toʻgʻri javobini belgilang`;
+    }
   } else {
-    const opts = q.options.map((o) => o.trim());
+    const opts = stringOptions(q.options).map((o) => o.trim());
     if (opts.length < 2 || opts.some((o) => !o)) return 'Barcha variantlarni toʻldiring (kamida 2 ta)';
     if (typeof q.correct_answer !== 'number' || q.correct_answer < 0 || q.correct_answer >= opts.length) return 'Toʻgʻri javobni belgilang';
   }
@@ -55,6 +69,22 @@ export function validateQuestion(q: QuestionInput): string | null {
   if (q.image_url && !/^(https:\/\/|\/)/.test(q.image_url)) return 'Rasm havolasi https:// yoki / bilan boshlanishi kerak';
   return null;
 }
+
+interface EditorStep {
+  text: string;
+  options: string[];
+  correct: number;
+}
+
+const EMPTY_PAIRS = () => [
+  { left: '', right: '' },
+  { left: '', right: '' },
+  { left: '', right: '' },
+];
+const EMPTY_STEPS = (): EditorStep[] => [
+  { text: '', options: ['', '', ''], correct: 0 },
+  { text: '', options: ['', '', ''], correct: 0 },
+];
 
 export function QuestionEditor({
   open,
@@ -76,6 +106,9 @@ export function QuestionEditor({
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  // turga xos tahrirlash holati (saqlashda options/correct_answer ga aylantiriladi)
+  const [pairs, setPairs] = useState(EMPTY_PAIRS);
+  const [steps, setSteps] = useState<EditorStep[]>(EMPTY_STEPS);
 
   useEffect(() => {
     if (!open) return;
@@ -89,8 +122,8 @@ export function QuestionEditor({
         difficulty,
         question_type,
         question_text,
-        options: question_type === 'short_answer' ? [] : [...options],
-        correct_answer: Array.isArray(correct_answer) ? [...correct_answer] : correct_answer,
+        options: question_type === 'short_answer' || question_type === 'matching' || question_type === 'multi_step' ? [] : [...stringOptions(options)],
+        correct_answer: Array.isArray(correct_answer) ? ([...correct_answer] as string[]) : correct_answer,
         explanation,
         hint,
         image_url,
@@ -99,7 +132,16 @@ export function QuestionEditor({
         recommended_round,
         is_active,
       });
-    } else setQ(emptyQuestion());
+      const mp = question_type === 'matching' ? matchingPairs(options, correct_answer) : [];
+      setPairs(mp.length >= 2 ? mp : EMPTY_PAIRS());
+      const st = question_type === 'multi_step' ? stepItems(options) : [];
+      const answers = Array.isArray(correct_answer) ? correct_answer.map(Number) : [];
+      setSteps(st.length >= 2 ? st.map((x, i) => ({ text: x.text, options: [...x.options], correct: answers[i] ?? 0 })) : EMPTY_STEPS());
+    } else {
+      setQ(emptyQuestion());
+      setPairs(EMPTY_PAIRS());
+      setSteps(EMPTY_STEPS());
+    }
     setError(null);
   }, [open, initial]);
 
@@ -109,7 +151,9 @@ export function QuestionEditor({
     setQ((p) => {
       if (t === 'true_false') return { ...p, question_type: t, options: ['Toʻgʻri', 'Notoʻgʻri'], correct_answer: 0 };
       if (t === 'short_answer') return { ...p, question_type: t, options: [], correct_answer: [''] };
-      const options = p.question_type === 'true_false' || p.question_type === 'short_answer' ? ['', '', '', ''] : p.options;
+      if (t === 'matching' || t === 'multi_step') return { ...p, question_type: t, options: [], correct_answer: [] };
+      const prev = stringOptions(p.options);
+      const options = p.question_type === 'true_false' || prev.length < 2 ? ['', '', '', ''] : prev;
       return { ...p, question_type: t, options, correct_answer: typeof p.correct_answer === 'number' ? Math.min(p.correct_answer, options.length - 1) : 0 };
     });
   };
@@ -137,13 +181,25 @@ export function QuestionEditor({
   };
 
   const save = async () => {
+    let options: QuestionInput['options'] = stringOptions(q.options).map((o) => o.trim());
+    let correct: QuestionInput['correct_answer'] = q.correct_answer;
+    if (q.question_type === 'short_answer') {
+      options = [];
+      correct = (Array.isArray(q.correct_answer) ? q.correct_answer : []).map((a) => String(a).trim()).filter(Boolean);
+    } else if (q.question_type === 'matching') {
+      options = pairs.map((p) => p.left.trim());
+      correct = pairs.map((p) => p.right.trim());
+    } else if (q.question_type === 'multi_step') {
+      options = steps.map((st) => ({ text: st.text.trim(), options: st.options.map((o) => o.trim()) }));
+      correct = steps.map((st) => st.correct);
+    }
     const clean: QuestionInput = {
       ...q,
       question_text: q.question_text.trim(),
       subject: q.subject.trim(),
       category: q.category.trim(),
-      options: q.question_type === 'short_answer' ? [] : q.options.map((o) => o.trim()),
-      correct_answer: Array.isArray(q.correct_answer) ? q.correct_answer.map((a) => a.trim()).filter(Boolean) : q.correct_answer,
+      options,
+      correct_answer: correct,
       image_url: q.image_url?.trim() || null,
     };
     const v = validateQuestion(clean);
@@ -162,8 +218,9 @@ export function QuestionEditor({
     }
   };
 
-  const isChoice = q.question_type !== 'short_answer';
-  const accepted = Array.isArray(q.correct_answer) ? q.correct_answer : [];
+  const isChoice = !['short_answer', 'matching', 'multi_step'].includes(q.question_type);
+  const accepted = Array.isArray(q.correct_answer) ? q.correct_answer.map(String) : [];
+  const choiceOptions = stringOptions(q.options);
 
   return (
     <Modal
@@ -264,7 +321,7 @@ export function QuestionEditor({
             <>
               <div className="label">Variantlar (toʻgʻrisini belgilang)</div>
               <div className="space-y-2">
-                {q.options.map((opt, i) => (
+                {choiceOptions.map((opt, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <label
                       className={clsx(
@@ -282,15 +339,15 @@ export function QuestionEditor({
                       maxLength={200}
                       readOnly={q.question_type === 'true_false'}
                       placeholder={`${OPTION_LETTERS[i]} variant`}
-                      onChange={(e) => setQ((p) => ({ ...p, options: p.options.map((o, j) => (j === i ? e.target.value : o)) }))}
+                      onChange={(e) => setQ((p) => ({ ...p, options: stringOptions(p.options).map((o, j) => (j === i ? e.target.value : o)) }))}
                     />
-                    {q.question_type !== 'true_false' && q.options.length > 2 && (
+                    {q.question_type !== 'true_false' && choiceOptions.length > 2 && (
                       <button
                         className="btn btn-ghost btn-sm"
                         aria-label="Variantni oʻchirish"
                         onClick={() =>
                           setQ((p) => {
-                            const options = p.options.filter((_, j) => j !== i);
+                            const options = stringOptions(p.options).filter((_, j) => j !== i);
                             const c = typeof p.correct_answer === 'number' ? p.correct_answer : 0;
                             return { ...p, options, correct_answer: c === i ? 0 : c > i ? c - 1 : c };
                           })
@@ -302,11 +359,140 @@ export function QuestionEditor({
                   </div>
                 ))}
               </div>
-              {q.question_type !== 'true_false' && q.options.length < 6 && (
-                <button className="btn btn-ghost btn-sm mt-2" onClick={() => setQ((p) => ({ ...p, options: [...p.options, ''] }))}>
+              {q.question_type !== 'true_false' && choiceOptions.length < 6 && (
+                <button className="btn btn-ghost btn-sm mt-2" onClick={() => setQ((p) => ({ ...p, options: [...stringOptions(p.options), ''] }))}>
                   <Plus className="h-4 w-4" /> Variant qoʻshish
                 </button>
               )}
+            </>
+          ) : q.question_type === 'matching' ? (
+            <>
+              <div className="label">Juftliklar: chap element → toʻgʻri javob (oʻng ustun)</div>
+              <div className="space-y-2">
+                {pairs.map((p, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="w-6 shrink-0 text-center font-display font-bold text-arena-muted">{i + 1}</span>
+                    <input
+                      className="input"
+                      value={p.left}
+                      maxLength={200}
+                      placeholder="Masalan: Klaviatura"
+                      onChange={(e) => setPairs((list) => list.map((x, j) => (j === i ? { ...x, left: e.target.value } : x)))}
+                    />
+                    <ArrowRight className="h-4 w-4 shrink-0 text-arena-muted" aria-hidden />
+                    <input
+                      className="input"
+                      value={p.right}
+                      maxLength={200}
+                      list="match-rights"
+                      placeholder="Masalan: Kiritish qurilmasi"
+                      onChange={(e) => setPairs((list) => list.map((x, j) => (j === i ? { ...x, right: e.target.value } : x)))}
+                    />
+                    {pairs.length > 2 && (
+                      <button className="btn btn-ghost btn-sm" aria-label="Juftlikni oʻchirish" onClick={() => setPairs((list) => list.filter((_, j) => j !== i))}>
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <datalist id="match-rights">
+                {[...new Set(pairs.map((p) => p.right.trim()).filter(Boolean))].map((r) => (
+                  <option key={r} value={r} />
+                ))}
+              </datalist>
+              {pairs.length < 4 && (
+                <button className="btn btn-ghost btn-sm mt-2" onClick={() => setPairs((list) => [...list, { left: '', right: '' }])}>
+                  <Plus className="h-4 w-4" /> Juftlik qoʻshish
+                </button>
+              )}
+              <p className="mt-2 text-xs text-arena-muted">
+                Oʻng ustundagi javoblar takrorlanishi mumkin (masalan, bir nechta qurilma “Kiritish”ga mos). Oʻquvchiga javoblar aralashtirib koʻrsatiladi; qisman toʻgʻri moslash qisman ball oladi.
+              </p>
+            </>
+          ) : q.question_type === 'multi_step' ? (
+            <>
+              <div className="label">Zanjir qadamlari (har bir qadamda toʻgʻri variantni belgilang)</div>
+              <div className="space-y-3">
+                {steps.map((st, i) => (
+                  <div key={i} className="rounded-xl border border-white/10 bg-space-950/40 p-3">
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="font-display text-sm font-bold text-arena-cyan">{i + 1}-qadam</span>
+                      {steps.length > 2 && (
+                        <button className="btn btn-ghost btn-sm ml-auto" aria-label="Qadamni oʻchirish" onClick={() => setSteps((list) => list.filter((_, j) => j !== i))}>
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      className="input"
+                      value={st.text}
+                      maxLength={300}
+                      placeholder={i === 0 ? 'Masalan: Monitor qorongʻi. Birinchi nimani tekshirasiz?' : 'Keyingi qadam savoli'}
+                      onChange={(e) => setSteps((list) => list.map((x, j) => (j === i ? { ...x, text: e.target.value } : x)))}
+                    />
+                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                      {st.options.map((opt, k) => (
+                        <div key={k} className="flex items-center gap-2">
+                          <label
+                            className={clsx(
+                              'flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border font-display text-sm font-bold',
+                              st.correct === k ? 'border-arena-success bg-arena-success/20 text-arena-success' : 'border-white/10 text-arena-muted',
+                            )}
+                            title="Toʻgʻri javob"
+                          >
+                            <input
+                              type="radio"
+                              className="sr-only"
+                              name={`step-${i}`}
+                              checked={st.correct === k}
+                              onChange={() => setSteps((list) => list.map((x, j) => (j === i ? { ...x, correct: k } : x)))}
+                            />
+                            {OPTION_LETTERS[k]}
+                          </label>
+                          <input
+                            className="input"
+                            value={opt}
+                            maxLength={200}
+                            placeholder={`${OPTION_LETTERS[k]} variant`}
+                            onChange={(e) =>
+                              setSteps((list) => list.map((x, j) => (j === i ? { ...x, options: x.options.map((o, m) => (m === k ? e.target.value : o)) } : x)))
+                            }
+                          />
+                          {st.options.length > 2 && (
+                            <button
+                              className="btn btn-ghost btn-sm"
+                              aria-label="Variantni oʻchirish"
+                              onClick={() =>
+                                setSteps((list) =>
+                                  list.map((x, j) =>
+                                    j === i ? { ...x, options: x.options.filter((_, m) => m !== k), correct: x.correct === k ? 0 : x.correct > k ? x.correct - 1 : x.correct } : x,
+                                  ),
+                                )
+                              }
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    {st.options.length < 4 && (
+                      <button className="btn btn-ghost btn-sm mt-2" onClick={() => setSteps((list) => list.map((x, j) => (j === i ? { ...x, options: [...x.options, ''] } : x)))}>
+                        <Plus className="h-4 w-4" /> Variant
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {steps.length < 4 && (
+                <button className="btn btn-ghost btn-sm mt-2" onClick={() => setSteps((list) => [...list, { text: '', options: ['', '', ''], correct: 0 }])}>
+                  <Plus className="h-4 w-4" /> Qadam qoʻshish
+                </button>
+              )}
+              <p className="mt-2 text-xs text-arena-muted">
+                Oʻquvchi qadamlarni ketma-ket yechadi: keyingi qadam faqat oldingisi toʻgʻri boʻlsa ochiladi, xato qadam zanjirni yakunlaydi. Har bir toʻgʻri qadam — qisman ball, toʻliq zanjir — bonus.
+              </p>
             </>
           ) : (
             <>

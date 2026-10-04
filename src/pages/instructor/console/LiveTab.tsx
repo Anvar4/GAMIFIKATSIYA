@@ -7,12 +7,13 @@ import { CountdownTimer } from '../../../components/game/CountdownTimer';
 import { AbilityPanel } from '../../../components/game/AbilityPanel';
 import { GameEventFeed } from '../../../components/game/GameEventFeed';
 import { EnergyBar, ShieldBar } from '../../../components/game/Meters';
-import { OPTION_LETTERS, formatCorrectAnswer, isChoiceType } from '../../../components/game/QuestionCard';
+import { OPTION_LETTERS, StepsReveal, formatCorrectAnswer, isChoiceType } from '../../../components/game/QuestionCard';
+import { matchingPairs, stringOptions } from '../../../game/questionShape';
 import { useFeedback } from '../../../context/Feedback';
 import { useAutoFinalize, useQuestionTimer, useServerNow } from '../../../hooks/useTimer';
 import { ABILITIES, SPECIAL_EVENTS, TEAM_COLORS, roundMeta } from '../../../game/constants';
 import { instructorActions } from '../../../game/state';
-import type { AbilityType, SpecialEventKind } from '../../../game/types';
+import type { AbilityType, AnswerRow, QuestionPayload, SpecialEventKind } from '../../../game/types';
 import {
   activateAbility,
   adjustScore,
@@ -45,6 +46,7 @@ export function LiveTab(ctx: ConsoleCtx) {
   const answered = new Set(s.answered_player_ids);
   const approved = s.players.filter((p) => p.status === 'approved' && p.team_id);
   const answerMap = new Map(s.answers.map((a) => [a.player_id, a]));
+  const stepMap = new Map((s.step_progress ?? []).map((p) => [p.player_id, p]));
 
   const handlers = {
     onStartQuestion: (disc: number | null) => void run('startQ', () => startQuestion(client, s.room.id, null, disc)),
@@ -88,7 +90,7 @@ export function LiveTab(ctx: ConsoleCtx) {
   // Variantlar boʻyicha javoblar taqsimoti (faqat oʻqituvchi koʻradi)
   const distribution = useMemo(() => {
     if (!q || !isChoiceType(q.question_type)) return null;
-    const counts = (q.options ?? []).map(() => 0);
+    const counts = stringOptions(q.options).map(() => 0);
     s.answers.forEach((a) => {
       const i = Number(a.selected_answer);
       if (counts[i] !== undefined) counts[i] += 1;
@@ -138,7 +140,7 @@ export function LiveTab(ctx: ConsoleCtx) {
                 {q.image_url && <img src={q.image_url} alt="" className="mt-2 h-20 rounded-lg bg-space-950 object-contain p-1" />}
                 {distribution ? (
                   <ul className="mt-3 space-y-1">
-                    {(q.options ?? []).map((o, i) => (
+                    {stringOptions(q.options).map((o, i) => (
                       <li key={i} className={clsx('flex items-center gap-2 rounded-lg px-2 py-1 text-sm', i === correctIdx ? 'bg-arena-success/15 text-arena-success' : 'bg-white/[0.03]')}>
                         <span className="w-5 font-display font-bold">{OPTION_LETTERS[i]}</span>
                         <span className="min-w-0 flex-1 truncate">{o}</span>
@@ -147,6 +149,18 @@ export function LiveTab(ctx: ConsoleCtx) {
                       </li>
                     ))}
                   </ul>
+                ) : q.question_type === 'matching' ? (
+                  <ul className="mt-3 space-y-1 text-sm">
+                    {matchingPairs(q.options, q.secret?.correct_answer).map((p, i) => (
+                      <li key={i} className="flex items-center gap-2 rounded-lg bg-arena-success/10 px-2 py-1 text-arena-success">
+                        <span className="min-w-0 flex-1 truncate text-arena-text">{p.left}</span>→<span className="min-w-0 flex-1 truncate">{p.right}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : q.question_type === 'multi_step' ? (
+                  <div className="mt-3 max-h-64 overflow-y-auto pr-1 text-sm scrollbar-thin">
+                    <StepsReveal steps={q.steps ?? []} correct={Array.isArray(q.secret?.correct_answer) ? q.secret.correct_answer.map(Number) : []} />
+                  </div>
                 ) : (
                   <p className="mt-3 rounded-lg bg-arena-success/10 px-3 py-2 text-sm text-arena-success">
                     Toʻgʻri javob: {formatCorrectAnswer(q.question_type, q.options, q.secret?.correct_answer)}
@@ -199,9 +213,11 @@ export function LiveTab(ctx: ConsoleCtx) {
                             <span className="flex items-center gap-1.5">
                               {a?.is_correct === true && <Check className="h-4 w-4 text-arena-success" />}
                               {a?.is_correct === false && <X className="h-4 w-4 text-arena-red" />}
-                              <span className="text-arena-text">
-                                {a ? (isChoiceType(q.question_type) ? OPTION_LETTERS[Number(a.selected_answer)] : a.selected_answer) : '✓'}
-                              </span>
+                              <span className="text-arena-text">{answerLabel(q, a)}</span>
+                            </span>
+                          ) : q?.status === 'active' && stepMap.has(p.id) ? (
+                            <span className="flex items-center gap-1 text-arena-cyan">
+                              <Clock3 className="h-3.5 w-3.5" /> {stepMap.get(p.id)!.done}/{q.input_spec?.steps ?? '?'} qadam
                             </span>
                           ) : q?.status === 'active' ? (
                             <span className="flex items-center gap-1 text-arena-muted">
@@ -283,6 +299,18 @@ export function LiveTab(ctx: ConsoleCtx) {
       </div>
     </div>
   );
+}
+
+/** Oʻqituvchi jadvalidagi javob koʻrinishi (turga qarab) */
+function answerLabel(q: QuestionPayload, a: AnswerRow | undefined): string {
+  if (!a) return '✓';
+  if (isChoiceType(q.question_type)) return OPTION_LETTERS[Number(a.selected_answer)] ?? '?';
+  if (q.question_type === 'matching' || q.question_type === 'multi_step') {
+    const total = q.question_type === 'matching' ? stringOptions(q.options).length : (q.input_spec?.steps ?? 0);
+    const unit = q.question_type === 'matching' ? 'juft' : 'qadam';
+    return a.credit !== null && a.credit !== undefined ? `${Math.round(Number(a.credit) * total)}/${total} ${unit}` : '✓';
+  }
+  return a.selected_answer;
 }
 
 function ScoreAdjustPanel({ ctx }: { ctx: ConsoleCtx }) {

@@ -49,6 +49,8 @@ export function describeEvent(e: GameEvent, ctx: Ctx): EventView {
       return { text: `Yangi savol • ${String(d.points ?? '')} ball`, tone: 'info', feed: true };
     case 'answer_submitted':
       return { text: `${playerName(ctx, e.player_id)} javob berdi`, tone: 'muted', feed: true };
+    case 'step_submitted':
+      return { text: `${playerName(ctx, e.player_id)} ${String(d.step ?? '')}/${String(d.steps ?? '')}-qadamni yubordi`, tone: 'muted', feed: false };
     case 'question_revealed':
       return { text: 'Toʻgʻri javob ochildi', tone: 'info', feed: true };
     case 'attack': {

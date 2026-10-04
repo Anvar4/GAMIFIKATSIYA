@@ -102,4 +102,100 @@ describe('Excel/CSV import', () => {
     expect(r.errors).toEqual([]);
     expect(r.questions[0].correct_answer).toBe(2);
   });
+
+  it('moslashtirish savolini “Chap = Oʻng” kataklaridan oʻqiydi va qayta eksport qiladi', () => {
+    const r = rowsToQuestions(
+      [
+        header,
+        row({
+          category: 'Qurilmalar',
+          question_type: 'Moslashtirish',
+          question_text: 'Qurilmalarni turiga moslang',
+          a: 'Klaviatura = Kiritish',
+          b: 'Monitor → Chiqarish',
+          c: 'SSD = Saqlash',
+          d: 'Mikrofon = Kiritish',
+          round: 4,
+        }),
+      ],
+      defaults,
+    );
+    expect(r.errors).toEqual([]);
+    const q = r.questions[0];
+    expect(q.question_type).toBe('matching');
+    expect(q.options).toEqual(['Klaviatura', 'Monitor', 'SSD', 'Mikrofon']);
+    expect(q.correct_answer).toEqual(['Kiritish', 'Chiqarish', 'Saqlash', 'Kiritish']);
+    const { _row, ...plain } = q;
+    void _row;
+    const again = rowsToQuestions([header, questionToRow(plain)], defaults).questions[0];
+    expect(again.options).toEqual(q.options);
+    expect(again.correct_answer).toEqual(q.correct_answer);
+  });
+
+  it('koʻp bosqichli zanjirni “Matn || variant | variant” kataklaridan oʻqiydi', () => {
+    const r = rowsToQuestions(
+      [
+        header,
+        row({
+          category: 'Nosozliklar',
+          question_type: 'Koʻp bosqichli',
+          question_text: 'Nosozlikni toping',
+          a: 'Monitor qorongʻi. Nima tekshiriladi? || Kabel | Protsessor | BIOS',
+          b: 'Kabel joyida. Keyingisi? || Klaviatura | Port',
+          correct: 'A, B',
+          round: 4,
+        }),
+      ],
+      defaults,
+    );
+    expect(r.errors).toEqual([]);
+    const q = r.questions[0];
+    expect(q.question_type).toBe('multi_step');
+    expect(q.options).toEqual([
+      { text: 'Monitor qorongʻi. Nima tekshiriladi?', options: ['Kabel', 'Protsessor', 'BIOS'] },
+      { text: 'Kabel joyida. Keyingisi?', options: ['Klaviatura', 'Port'] },
+    ]);
+    expect(q.correct_answer).toEqual([0, 1]);
+    const { _row, ...plain } = q;
+    void _row;
+    const again = rowsToQuestions([header, questionToRow(plain)], defaults).questions[0];
+    expect(again.options).toEqual(q.options);
+    expect(again.correct_answer).toEqual(q.correct_answer);
+  });
+
+  it('notoʻgʻri moslashtirish va zanjir kataklari tushunarli xato beradi', () => {
+    const r = rowsToQuestions(
+      [
+        header,
+        row({ category: 'X', question_type: 'Moslashtirish', question_text: 'Juftlik yoʻq', a: 'Klaviatura', b: 'Monitor = Chiqarish' }),
+        row({ category: 'X', question_type: 'Koʻp bosqichli', question_text: 'Javob soni mos emas', a: '1-qadam || a | b', b: '2-qadam || a | b', correct: 'A' }),
+      ],
+      defaults,
+    );
+    expect(r.questions).toHaveLength(0);
+    expect(r.errors[0].message).toMatch(/Chap = Oʻng/);
+    expect(r.errors[1].message).toMatch(/har bir qadam/);
+  });
+
+  it('JSON import yangi savol turlarini qabul qiladi', () => {
+    const r = jsonToQuestions(
+      [
+        { question_text: 'Moslang', question_type: 'matching', options: ['HDD', 'DVD'], correct_answer: ['Magnit', 'Optik'], category: 'Saqlash' },
+        {
+          question_text: 'Zanjir',
+          question_type: 'multi_step',
+          options: [
+            { text: 'Birinchi qadam', options: ['x', 'y'] },
+            { text: 'Ikkinchi qadam', options: ['p', 'q', 'r'] },
+          ],
+          correct_answer: [1, 2],
+          category: 'Mantiq',
+        },
+      ],
+      defaults,
+    );
+    expect(r.errors).toEqual([]);
+    expect(r.questions[0]).toMatchObject({ question_type: 'matching', options: ['HDD', 'DVD'], correct_answer: ['Magnit', 'Optik'] });
+    expect(r.questions[1]).toMatchObject({ question_type: 'multi_step', correct_answer: [1, 2] });
+  });
 });

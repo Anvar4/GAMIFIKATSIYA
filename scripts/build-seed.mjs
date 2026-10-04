@@ -1,6 +1,6 @@
 // Savollar bankidan supabase/seed.sql va supabase/seed/question_bank.json yaratadi.
 // Ishga tushirish: npm run seed:sql
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { QUESTION_BANK } from './question-bank.mjs';
@@ -53,9 +53,18 @@ function shuffleWithCorrect(options, seed) {
   return { options: idx.map((i) => options[i]), correct: idx.indexOf(0) };
 }
 
+/** Rasm fayli hali yuklab olinmagan rasmli savollar seed'ga kiritilmaydi (buzilgan rasm boʻlmasligi uchun) */
+export const missingImages = [];
+
 export function buildQuestions() {
   const seen = new Set();
-  return QUESTION_BANK.map((item, i) => {
+  missingImages.length = 0;
+  // aralashtirish urugʻi savolning bankdagi asl oʻrniga bogʻliq — rasm qoʻshilganda boshqa savollar oʻzgarmaydi
+  return QUESTION_BANK.map((item, i) => ({ item, i })).filter(({ item }) => {
+    if (!item.img || existsSync(join(root, 'public', 'assets', 'devices', `${item.img}.webp`))) return true;
+    missingImages.push(item.img);
+    return false;
+  }).map(({ item, i }) => {
     if (!TOPICS[item.c]) throw new Error(`Nomaʼlum kategoriya: ${item.c}`);
     const key = `${item.q}|${item.img ?? ''}`;
     if (seen.has(key)) throw new Error(`Takroriy savol: ${item.q}`);
@@ -63,7 +72,19 @@ export function buildQuestions() {
     const defaults = ROUND_DEFAULTS[item.r];
     let options = [];
     let correct;
-    if (item.t === 'true_false') {
+    if (item.t === 'matching') {
+      if (!Array.isArray(item.pairs) || item.pairs.length < 2 || item.pairs.length > 4) throw new Error(`Juftliklar 2–4 ta boʻlishi kerak: ${item.q}`);
+      options = item.pairs.map((p) => p[0]);
+      correct = item.pairs.map((p) => p[1]);
+    } else if (item.t === 'multi_step') {
+      if (!Array.isArray(item.steps) || item.steps.length < 2 || item.steps.length > 4) throw new Error(`Qadamlar 2–4 ta boʻlishi kerak: ${item.q}`);
+      const steps = item.steps.map((st, j) => {
+        const sh = shuffleWithCorrect(st.o, (i + 1) * 31 + j);
+        return { step: { text: st.q, options: sh.options }, correct: sh.correct };
+      });
+      options = steps.map((x) => x.step);
+      correct = steps.map((x) => x.correct);
+    } else if (item.t === 'true_false') {
       options = ['Toʻgʻri', 'Notoʻgʻri'];
       correct = item.a ? 0 : 1;
     } else if (item.t === 'short_answer') {
@@ -131,6 +152,10 @@ if (isMain) {
     if (typeof q.correct_answer === 'number' && q.options.length === 4) answerPos[q.correct_answer]++;
   }
   console.log(`✔ ${questions.length} ta savol yozildi`);
+  if (missingImages.length) {
+    console.warn(`! Rasmi topilmagan ${missingImages.length} ta savol oʻtkazib yuborildi: ${missingImages.join(', ')}`);
+    console.warn('  Rasmlarni yuklab olish: python scripts/fetch_higgsfield_assets.py');
+  }
   console.log('Raundlar:', byRound);
   console.log('Mavzular:', byTopic);
   console.log('Toʻgʻri javob joylashuvi (A,B,C,D):', answerPos);

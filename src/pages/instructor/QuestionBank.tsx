@@ -5,7 +5,8 @@ import { InstructorLayout } from './InstructorLayout';
 import { QuestionEditor } from './QuestionEditor';
 import { ImportModal } from './ImportModal';
 import { Modal, Panel, Spinner } from '../../components/ui/Basics';
-import { AnswerOption, QuestionImage, formatCorrectAnswer, isChoiceType } from '../../components/game/QuestionCard';
+import { AnswerOption, MatchingInput, QuestionImage, StepsReveal, formatCorrectAnswer, isChoiceType } from '../../components/game/QuestionCard';
+import { matchingPairs, stepItems, stringOptions } from '../../game/questionShape';
 import { useInstructorAuth } from '../../context/InstructorAuth';
 import { useFeedback } from '../../context/Feedback';
 import { getInstructorClient } from '../../lib/supabase';
@@ -330,9 +331,17 @@ export function QuestionPreview({ q }: { q: Pick<QuestionRecord, 'question_type'
           <p className="font-display text-xl font-bold leading-snug">{q.question_text}</p>
           {isChoiceType(q.question_type) ? (
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              {q.options.map((o, i) => (
+              {stringOptions(q.options).map((o, i) => (
                 <AnswerOption key={i} index={i} text={o} state={i === q.correct_answer ? 'correct' : 'idle'} />
               ))}
+            </div>
+          ) : q.question_type === 'matching' ? (
+            <div className="mt-4">
+              <MatchingPreview options={q.options} correct={q.correct_answer} />
+            </div>
+          ) : q.question_type === 'multi_step' ? (
+            <div className="mt-4">
+              <StepsReveal steps={stepItems(q.options)} correct={Array.isArray(q.correct_answer) ? q.correct_answer.map(Number) : []} />
             </div>
           ) : (
             <p className="mt-4 rounded-xl bg-arena-success/10 p-3 text-arena-success">
@@ -352,5 +361,19 @@ export function QuestionPreview({ q }: { q: Pick<QuestionRecord, 'question_type'
         </p>
       )}
     </div>
+  );
+}
+
+/** Moslashtirish savolini oʻquvchi koʻradigan koʻrinishda (javoblar aralash) va toʻgʻri juftliklar bilan */
+function MatchingPreview({ options, correct }: { options: unknown; correct: unknown }) {
+  const pairs = matchingPairs(options, correct);
+  const choices = [...new Set(pairs.map((p) => p.right))].sort((a, b) => a.localeCompare(b));
+  return (
+    <MatchingInput
+      left={pairs.map((p) => p.left)}
+      choices={choices}
+      value={pairs.map((p) => choices.indexOf(p.right))}
+      reveal={pairs.map((p) => p.right)}
+    />
   );
 }

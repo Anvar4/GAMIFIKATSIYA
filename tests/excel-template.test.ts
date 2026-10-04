@@ -18,7 +18,7 @@ describe('Excel shabloni', () => {
   it('namuna qatorlari xatosiz import qilinadi (turli fan va sinflar)', async () => {
     const r = await load('IT_ARENA_savollar_shabloni.xlsx');
     expect(r.errors).toEqual([]);
-    expect(r.questions).toHaveLength(6);
+    expect(r.questions).toHaveLength(8);
     expect(new Set(r.questions.map((q) => q.subject)).size).toBeGreaterThanOrEqual(5);
     expect(r.questions.map((q) => q.question_type)).toEqual([
       'single_choice',
@@ -27,8 +27,12 @@ describe('Excel shabloni', () => {
       'short_answer',
       'image_identification',
       'logical_puzzle',
+      'matching',
+      'multi_step',
     ]);
     expect(r.questions[3].correct_answer).toEqual(['Nyuton', 'N']);
+    expect(r.questions[6].correct_answer).toEqual(['Magnit', 'Optik (lazer)', 'Flesh-xotira', 'Magnit']);
+    expect(r.questions[7].correct_answer).toEqual([0, 1, 1]);
   });
 
   it('Informatika 9-sinf banki toʻliq import qilinadi', async () => {

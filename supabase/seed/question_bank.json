@@ -1406,132 +1406,6 @@
     "subject": "Informatika",
     "grade": 9,
     "category": "Kompyuter tizimining asosiy komponentlari",
-    "difficulty": "medium",
-    "question_type": "image_identification",
-    "question_text": "Rasmdagi kompyuter qismi qaysi?",
-    "options": [
-      "Quvvat bloki",
-      "Markaziy protsessor (CPU)",
-      "Qattiq disk (HDD)",
-      "Operativ xotira (RAM)"
-    ],
-    "correct_answer": 3,
-    "explanation": "RAM moduli — mikrosxemalar oʻrnatilgan uzun plata; u ishlayotgan dasturlarni vaqtincha saqlaydi.",
-    "hint": "U ona plataga uzun uyachaga oʻrnatiladi.",
-    "image_url": "/assets/devices/ram.webp",
-    "default_points": 150,
-    "default_time_limit": 25,
-    "recommended_round": 2
-  },
-  {
-    "subject": "Informatika",
-    "grade": 9,
-    "category": "Kompyuter tizimining asosiy komponentlari",
-    "difficulty": "medium",
-    "question_type": "image_identification",
-    "question_text": "Rasmdagi qism qaysi?",
-    "options": [
-      "Operativ xotira (RAM)",
-      "Tarmoq adapteri",
-      "Markaziy protsessor (CPU)",
-      "SSD"
-    ],
-    "correct_answer": 2,
-    "explanation": "Protsessor — kvadrat shakldagi mikrosxema; u dastur buyruqlarini bajaradi.",
-    "hint": "Bu kompyuterning “miyasi”.",
-    "image_url": "/assets/devices/cpu.webp",
-    "default_points": 150,
-    "default_time_limit": 25,
-    "recommended_round": 2
-  },
-  {
-    "subject": "Informatika",
-    "grade": 9,
-    "category": "Chiqarish qurilmalari",
-    "difficulty": "easy",
-    "question_type": "image_identification",
-    "question_text": "Rasmdagi qurilma nima yasaydi?",
-    "options": [
-      "Ovozli fayllarni",
-      "Qogʻoz hujjatlarni",
-      "Uch oʻlchamli (3D) obyektlarni",
-      "Fotosuratlarni"
-    ],
-    "correct_answer": 2,
-    "explanation": "3D printer raqamli modeldan plastikni qatlamma-qatlam eritib qoʻyib, haqiqiy buyum yasaydi.",
-    "hint": "Natija — qoʻlda ushlasa boʻladigan buyum.",
-    "image_url": "/assets/devices/printer_3d.webp",
-    "default_points": 150,
-    "default_time_limit": 25,
-    "recommended_round": 2
-  },
-  {
-    "subject": "Informatika",
-    "grade": 9,
-    "category": "Maʼlumotlarni bevosita kiritish qurilmalari",
-    "difficulty": "medium",
-    "question_type": "image_identification",
-    "question_text": "Rasmdagi qurilma qayerda ishlatiladi?",
-    "options": [
-      "Hujjat chop etishda",
-      "Rasm chizishda",
-      "Ovoz yozishda",
-      "Doʻkonda bank kartasi bilan toʻlov qilishda"
-    ],
-    "correct_answer": 3,
-    "explanation": "Toʻlov terminali karta chipini (chip va PIN) yoki kontaktsiz (NFC) maʼlumotni oʻqiydi.",
-    "hint": "Unda PIN-kod teriladi.",
-    "image_url": "/assets/devices/pos_terminal.webp",
-    "default_points": 150,
-    "default_time_limit": 25,
-    "recommended_round": 2
-  },
-  {
-    "subject": "Informatika",
-    "grade": 9,
-    "category": "Yangi texnologiyalarning taʼsiri",
-    "difficulty": "easy",
-    "question_type": "image_identification",
-    "question_text": "Rasmdagi qurilma qaysi texnologiyaga tegishli?",
-    "options": [
-      "Virtual reallik (VR)",
-      "Shtrix-kod",
-      "Bulutli saqlash",
-      "Lazerli chop etish"
-    ],
-    "correct_answer": 0,
-    "explanation": "VR koʻzoynak foydalanuvchini toʻliq virtual muhitga olib kiradi: taʼlim, tibbiyot va oʻyinlarda qoʻllanadi.",
-    "hint": "U koʻzga taqiladi va boshqa dunyoni koʻrsatadi.",
-    "image_url": "/assets/devices/vr_headset.webp",
-    "default_points": 150,
-    "default_time_limit": 25,
-    "recommended_round": 2
-  },
-  {
-    "subject": "Informatika",
-    "grade": 9,
-    "category": "Yangi texnologiyalarning taʼsiri",
-    "difficulty": "easy",
-    "question_type": "image_identification",
-    "question_text": "Rasmdagi uchuvchi qurilma qanday ataladi?",
-    "options": [
-      "Proyektor",
-      "Sunʼiy yoʻldosh",
-      "Dron (uchuvchisiz uchish apparati)",
-      "Vertolyot modeli"
-    ],
-    "correct_answer": 2,
-    "explanation": "Dronlar kamera va sensorlar bilan jihozlanadi: xaritalash, yetkazib berish, qishloq xoʻjaligida qoʻllanadi.",
-    "hint": "Unda bir nechta parrak bor va u masofadan boshqariladi.",
-    "image_url": "/assets/devices/drone.webp",
-    "default_points": 150,
-    "default_time_limit": 25,
-    "recommended_round": 2
-  },
-  {
-    "subject": "Informatika",
-    "grade": 9,
-    "category": "Kompyuter tizimining asosiy komponentlari",
     "difficulty": "easy",
     "question_type": "single_choice",
     "question_text": "1 bayt necha bitdan iborat?",
@@ -2422,6 +2296,319 @@
     "correct_answer": 2,
     "explanation": "3D printerlar shaxsga moslashtirilgan protezlar, ehtiyot qismlar va prototiplarni tez yasash imkonini beradi.",
     "hint": "U qatlamma-qatlam “quradi”.",
+    "image_url": null,
+    "default_points": 300,
+    "default_time_limit": 45,
+    "recommended_round": 5
+  },
+  {
+    "subject": "Informatika",
+    "grade": 9,
+    "category": "Kiritish qurilmalari",
+    "difficulty": "medium",
+    "question_type": "matching",
+    "question_text": "MOSLASHTIRISH: Qurilmalarni vazifasiga moslang.",
+    "options": [
+      "Klaviatura",
+      "Printer",
+      "Fleshka",
+      "Mikrofon"
+    ],
+    "correct_answer": [
+      "Kiritish",
+      "Chiqarish",
+      "Saqlash",
+      "Kiritish"
+    ],
+    "explanation": "Kiritish qurilmalari maʼlumotni kompyuterga kiritadi, chiqarish qurilmalari natijani koʻrsatadi, saqlash qurilmalari maʼlumotni uzoq saqlaydi.",
+    "hint": "Maʼlumot qaysi tomonga harakatlanadi?",
+    "image_url": null,
+    "default_points": 250,
+    "default_time_limit": 40,
+    "recommended_round": 4
+  },
+  {
+    "subject": "Informatika",
+    "grade": 9,
+    "category": "Saqlash qurilmalari va maʼlumot almashish",
+    "difficulty": "medium",
+    "question_type": "matching",
+    "question_text": "MOSLASHTIRISH: Saqlash qurilmalarini ishlash usuliga moslang.",
+    "options": [
+      "Qattiq disk (HDD)",
+      "DVD disk",
+      "SSD",
+      "Magnit lenta"
+    ],
+    "correct_answer": [
+      "Magnit",
+      "Optik (lazer)",
+      "Flesh-xotira",
+      "Magnit"
+    ],
+    "explanation": "HDD va lenta maʼlumotni magnitlangan sirtga yozadi, CD/DVD lazer nuri bilan oʻqiladi, SSD va fleshka esa harakatlanuvchi qismlarsiz flesh-xotiradan foydalanadi.",
+    "hint": "Magnit, lazer yoki mikrosxema?",
+    "image_url": null,
+    "default_points": 250,
+    "default_time_limit": 40,
+    "recommended_round": 4
+  },
+  {
+    "subject": "Informatika",
+    "grade": 9,
+    "category": "Kompyuter qurilmalari va dasturiy taʼminot",
+    "difficulty": "medium",
+    "question_type": "matching",
+    "question_text": "MOSLASHTIRISH: Dasturlarni turiga moslang.",
+    "options": [
+      "Windows",
+      "Matn muharriri",
+      "Antivirus",
+      "Linux"
+    ],
+    "correct_answer": [
+      "Operatsion tizim",
+      "Amaliy dastur",
+      "Utilita (xizmat dasturi)",
+      "Operatsion tizim"
+    ],
+    "explanation": "Operatsion tizim kompyuterni boshqaradi, amaliy dasturlar foydalanuvchi vazifasini bajaradi, utilitalar esa tizimga xizmat koʻrsatadi (himoya, tozalash, arxivlash).",
+    "hint": "Kim kompyuterni boshqaradi, kim foydalanuvchiga xizmat qiladi?",
+    "image_url": null,
+    "default_points": 250,
+    "default_time_limit": 40,
+    "recommended_round": 4
+  },
+  {
+    "subject": "Informatika",
+    "grade": 9,
+    "category": "Maʼlumotlarni bevosita kiritish qurilmalari",
+    "difficulty": "hard",
+    "question_type": "matching",
+    "question_text": "MOSLASHTIRISH: Bevosita kiritish usullarini qoʻllanish joyiga moslang.",
+    "options": [
+      "Shtrix-kod skaneri",
+      "OMR",
+      "RFID",
+      "Chip va PIN"
+    ],
+    "correct_answer": [
+      "Doʻkon kassasi",
+      "Test varaqalarini tekshirish",
+      "Kontaktsiz kirish kartasi",
+      "Bank kartasi bilan toʻlov"
+    ],
+    "explanation": "Bevosita kiritish qurilmalari maʼlumotni klaviaturasiz, tez va xatosiz kiritadi: shtrix-kod — tovarlar, OMR — belgilangan javoblar, RFID — radio metkalar, chip va PIN — bank kartasi.",
+    "hint": "Har bir texnologiya qayerda koʻp uchraydi?",
+    "image_url": null,
+    "default_points": 250,
+    "default_time_limit": 40,
+    "recommended_round": 4
+  },
+  {
+    "subject": "Informatika",
+    "grade": 9,
+    "category": "Kompyuter turlari",
+    "difficulty": "medium",
+    "question_type": "matching",
+    "question_text": "MOSLASHTIRISH: Kompyuter turlarini tavsifiga moslang.",
+    "options": [
+      "Mainframe",
+      "Noutbuk",
+      "Smartfon",
+      "Stol kompyuteri"
+    ],
+    "correct_answer": [
+      "Minglab foydalanuvchiga xizmat qiluvchi kuchli kompyuter",
+      "Batareyali koʻchma kompyuter",
+      "Choʻntakdagi mobil qurilma",
+      "Doimiy joyda turadigan shaxsiy kompyuter"
+    ],
+    "explanation": "Kompyuterlar oʻlchami, quvvati va koʻchmaligi boʻyicha farq qiladi.",
+    "hint": "Eng kattasi va eng kichigini toping.",
+    "image_url": null,
+    "default_points": 250,
+    "default_time_limit": 40,
+    "recommended_round": 4
+  },
+  {
+    "subject": "Informatika",
+    "grade": 9,
+    "category": "Chiqarish qurilmalari",
+    "difficulty": "medium",
+    "question_type": "multi_step",
+    "question_text": "NOSOZLIK ZANJIRI: Printer hujjatni chop etmayapti. Muammoni bosqichma-bosqich toping.",
+    "options": [
+      {
+        "text": "Avval nimani tekshirasiz?",
+        "options": [
+          "Printer yoqilgan va kompyuterga ulanganini",
+          "Monitor yorugʻligini",
+          "Kompyuter protsessorini"
+        ]
+      },
+      {
+        "text": "Printer yoqilgan va ulangan, lekin ekranda “Qogʻoz tugadi” xabari chiqdi. Nima qilasiz?",
+        "options": [
+          "Klaviaturani almashtiraman",
+          "Operatsion tizimni qayta oʻrnataman",
+          "Lotokka qogʻoz solaman"
+        ]
+      },
+      {
+        "text": "Qogʻoz solindi, lekin sahifa juda xira chiqyapti. Ehtimoliy sabab?",
+        "options": [
+          "Sichqoncha buzilgan",
+          "Siyoh yoki toner tugayapti",
+          "Internet sekin"
+        ]
+      }
+    ],
+    "correct_answer": [
+      0,
+      2,
+      1
+    ],
+    "explanation": "Nosozlik eng oddiy sabablardan boshlab tekshiriladi: quvvat va ulanish → qogʻoz → siyoh yoki toner.",
+    "hint": "Oddiydan murakkabga.",
+    "image_url": null,
+    "default_points": 250,
+    "default_time_limit": 40,
+    "recommended_round": 4
+  },
+  {
+    "subject": "Informatika",
+    "grade": 9,
+    "category": "Saqlash qurilmalari va maʼlumot almashish",
+    "difficulty": "hard",
+    "question_type": "multi_step",
+    "question_text": "RAQAMLI ZANJIR: Hajmi 2 GB boʻlgan videoni 8 GB lik fleshkaga yozmoqchisiz. Hisobni qadamma-qadam bajaring.",
+    "options": [
+      {
+        "text": "1 GB necha MB ga teng?",
+        "options": [
+          "1000 KB",
+          "8 MB",
+          "1024 MB",
+          "100 MB"
+        ]
+      },
+      {
+        "text": "Demak, 2 GB lik video necha MB?",
+        "options": [
+          "4096 MB",
+          "2048 MB",
+          "1024 MB",
+          "2000 KB"
+        ]
+      },
+      {
+        "text": "8 GB lik fleshkaga shunday videolardan nechtasi sigʻadi?",
+        "options": [
+          "2 ta",
+          "16 ta",
+          "8 ta",
+          "4 ta"
+        ]
+      }
+    ],
+    "correct_answer": [
+      2,
+      1,
+      3
+    ],
+    "explanation": "1 GB = 1024 MB, shuning uchun 2 GB = 2048 MB. 8 GB ÷ 2 GB = 4 ta video.",
+    "hint": "Har bir birlik oldingisidan 1024 marta katta.",
+    "image_url": null,
+    "default_points": 250,
+    "default_time_limit": 40,
+    "recommended_round": 4
+  },
+  {
+    "subject": "Informatika",
+    "grade": 9,
+    "category": "Operatsion tizimlar",
+    "difficulty": "hard",
+    "question_type": "multi_step",
+    "question_text": "BOSS ZANJIRI: Kompyuter yoqilgandan to dastur ishga tushguncha nima sodir boʻladi?",
+    "options": [
+      {
+        "text": "Kompyuter yoqilganda birinchi boʻlib nima ishga tushadi?",
+        "options": [
+          "Brauzer",
+          "BIOS/UEFI — qurilmalarni tekshiradi",
+          "Matn muharriri"
+        ]
+      },
+      {
+        "text": "Shundan keyin qaysi dastur xotiraga yuklanadi?",
+        "options": [
+          "Antivirus bazasi",
+          "Fotosuratlar papkasi",
+          "Operatsion tizim"
+        ]
+      },
+      {
+        "text": "Foydalanuvchi dastur belgisini bosganda uni nima ishga tushiradi?",
+        "options": [
+          "Sichqoncha",
+          "Operatsion tizim — dasturni xotiraga yuklaydi",
+          "Monitor"
+        ]
+      }
+    ],
+    "correct_answer": [
+      1,
+      2,
+      1
+    ],
+    "explanation": "Yuklanish ketma-ketligi: BIOS/UEFI qurilmalarni tekshiradi → operatsion tizim yuklanadi → OT foydalanuvchi dasturlarini xotiraga yuklab ishga tushiradi.",
+    "hint": "Avval apparat, keyin OT, keyin dasturlar.",
+    "image_url": null,
+    "default_points": 300,
+    "default_time_limit": 45,
+    "recommended_round": 5
+  },
+  {
+    "subject": "Informatika",
+    "grade": 9,
+    "category": "Maʼlumotlarni bevosita kiritish qurilmalari",
+    "difficulty": "hard",
+    "question_type": "multi_step",
+    "question_text": "BOSS ZANJIRI: Xaridor doʻkonda tovar sotib olmoqda. Maʼlumot qanday harakatlanishini kuzating.",
+    "options": [
+      {
+        "text": "Kassir tovarni qanday tez kiritadi?",
+        "options": [
+          "Nomini klaviaturada yozadi",
+          "Shtrix-kodni skaner bilan oʻqiydi",
+          "Mikrofonga aytadi"
+        ]
+      },
+      {
+        "text": "Tovar narxi qayerdan olinadi?",
+        "options": [
+          "Xaridorning telefonidan",
+          "Printer xotirasidan",
+          "Doʻkonning maʼlumotlar bazasidan"
+        ]
+      },
+      {
+        "text": "Xaridor bank kartasi bilan toʻlaydi. Karta maʼlumoti qanday oʻqiladi?",
+        "options": [
+          "Chip va PIN yoki kontaktsiz (NFC) terminal orqali",
+          "Kassir qoʻlda yozib",
+          "Skaner bilan rasmga olib"
+        ]
+      }
+    ],
+    "correct_answer": [
+      1,
+      2,
+      0
+    ],
+    "explanation": "Doʻkonda maʼlumot avtomatik kiritiladi: shtrix-kod → maʼlumotlar bazasidan narx → chip va PIN yoki NFC orqali toʻlov.",
+    "hint": "Har qadamda eng tez va xatosiz usulni tanlang.",
     "image_url": null,
     "default_points": 300,
     "default_time_limit": 45,

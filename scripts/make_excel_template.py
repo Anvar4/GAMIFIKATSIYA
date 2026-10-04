@@ -3,7 +3,7 @@
 Ishga tushirish:  python scripts/make_excel_template.py
 Natija:
   public/templates/IT_ARENA_savollar_shabloni.xlsx       — boʻsh shablon + namunalar + yoʻriqnoma
-  public/templates/Informatika_9-sinf_savollar_banki.xlsx — tayyor 117 ta savol (tahrirlab qayta yuklash mumkin)
+  public/templates/Informatika_9-sinf_savollar_banki.xlsx — tayyor savollar banki (tahrirlab qayta yuklash mumkin)
 """
 import json
 from pathlib import Path
@@ -20,13 +20,13 @@ COLUMNS = [
     ("Fan", 14, "Fan nomi: Informatika, Matematika, Ona tili, Fizika ... Boʻsh qolsa, import oynasida tanlangan fan olinadi."),
     ("Sinf", 7, "Sinf raqami: 5, 6, 7, 8, 9, 10 yoki 11. Boʻsh qolsa — barcha sinflar uchun."),
     ("Mavzu", 30, "Darsdagi mavzu nomi. Xona yaratishda mavzular boʻyicha savol tanlash mumkin."),
-    ("Savol turi", 22, "Roʻyxatdan tanlang: Test, Toʻgʻri/Notoʻgʻri, Rasmli, Qisqa javob, Mantiqiy."),
+    ("Savol turi", 22, "Roʻyxatdan tanlang: Test, Toʻgʻri/Notoʻgʻri, Rasmli, Qisqa javob, Mantiqiy, Moslashtirish, Koʻp bosqichli."),
     ("Savol matni", 60, "Savolning oʻzi (3–600 belgi)."),
-    ("A variant", 26, "Test, Rasmli va Mantiqiy savollar uchun variantlar. Kamida A va B toʻldirilsin."),
+    ("A variant", 26, "Test, Rasmli va Mantiqiy savollar uchun variantlar. Kamida A va B toʻldirilsin.\nMoslashtirish: har bir katakda juftlik “Chap = Oʻng” (masalan: Klaviatura = Kiritish).\nKoʻp bosqichli: har bir katak — bitta qadam “Qadam matni || variant | variant | variant”."),
     ("B variant", 26, None),
     ("C variant", 26, None),
     ("D variant", 26, None),
-    ("Toʻgʻri javob", 16, "Test/Rasmli/Mantiqiy: A, B, C yoki D.\nToʻgʻri/Notoʻgʻri: Toʻgʻri yoki Notoʻgʻri.\nQisqa javob: javob(lar), bir nechta boʻlsa ; bilan ajrating (masalan: 6; olti)."),
+    ("Toʻgʻri javob", 16, "Test/Rasmli/Mantiqiy: A, B, C yoki D.\nToʻgʻri/Notoʻgʻri: Toʻgʻri yoki Notoʻgʻri.\nQisqa javob: javob(lar), bir nechta boʻlsa ; bilan ajrating (masalan: 6; olti).\nMoslashtirish: boʻsh qoldiring (juftliklar variantlarda).\nKoʻp bosqichli: har bir qadam uchun harf, vergul bilan (masalan: A, C, B)."),
     ("Izoh", 44, "Javob ochilganda oʻquvchilarga koʻrsatiladigan qisqa tushuntirish."),
     ("Maslahat", 30, "HINT SCAN qobiliyati ishlatilganda jamoaga koʻrsatiladi (ixtiyoriy)."),
     ("Rasm havolasi", 30, "Rasmli savol uchun: https:// bilan boshlanuvchi havola. Rasmni kompyuterdan yuklash uchun importdan keyin savolni tahrirlab, “Rasm yuklash” tugmasidan foydalaning."),
@@ -36,7 +36,7 @@ COLUMNS = [
     ("Vaqt (soniya)", 12, "Ixtiyoriy, 5–300 soniya. Boʻsh qolsa raund boʻyicha."),
 ]
 
-TYPE_LIST = ["Test", "Toʻgʻri/Notoʻgʻri", "Rasmli", "Qisqa javob", "Mantiqiy"]
+TYPE_LIST = ["Test", "Toʻgʻri/Notoʻgʻri", "Rasmli", "Qisqa javob", "Mantiqiy", "Moslashtirish", "Koʻp bosqichli"]
 DIFF_LIST = ["oson", "oʻrta", "qiyin"]
 TYPE_LABEL = {
     "single_choice": "Test",
@@ -44,6 +44,8 @@ TYPE_LABEL = {
     "image_identification": "Rasmli",
     "short_answer": "Qisqa javob",
     "logical_puzzle": "Mantiqiy",
+    "matching": "Moslashtirish",
+    "multi_step": "Koʻp bosqichli",
 }
 DIFF_LABEL = {"easy": "oson", "medium": "oʻrta", "hard": "qiyin"}
 
@@ -66,6 +68,14 @@ EXAMPLES = [
     ["Ingliz tili", 10, "Present Perfect", "Mantiqiy", "Choose the correct form: She ___ already ___ her homework.",
      "has / finished", "have / finished", "is / finishing", "did / finish", "A",
      "He/she/it bilan Present Perfect: has + V3.", "Ega 3-shaxs birlikda.", "", "qiyin", 5, 300, 45],
+    ["Informatika", 9, "Saqlash qurilmalari", "Moslashtirish", "Saqlash qurilmalarini ishlash usuliga moslang.",
+     "HDD = Magnit", "DVD = Optik (lazer)", "SSD = Flesh-xotira", "Magnit lenta = Magnit", "",
+     "HDD va lenta — magnit, DVD — lazer, SSD — flesh-xotira.", "Magnit, lazer yoki mikrosxema?", "", "oʻrta", 4, "", ""],
+    ["Informatika", 9, "Chiqarish qurilmalari", "Koʻp bosqichli", "Printer chop etmayapti. Muammoni bosqichma-bosqich toping.",
+     "Avval nimani tekshirasiz? || Printer yoqilgan va ulanganini | Protsessorni | Monitorni",
+     "Ekranda “Qogʻoz tugadi” xabari. Nima qilasiz? || OT ni qayta oʻrnataman | Lotokka qogʻoz solaman",
+     "Sahifa xira chiqyapti. Sabab? || Sichqoncha buzilgan | Siyoh yoki toner tugayapti | Internet sekin", "",
+     "A, B, B", "Nosozlik oddiy sabablardan boshlab tekshiriladi.", "Oddiydan murakkabga.", "", "oʻrta", 4, "", ""],
 ]
 
 DARK = PatternFill("solid", fgColor="0E1B2D")
@@ -150,6 +160,11 @@ def build_instructions(wb):
         ("Rasmli", "Test kabi, lekin katta ekranda rasm koʻrsatiladi. “Rasm havolasi” majburiy."),
         ("Qisqa javob", "Oʻquvchi javobni yozadi (raqamli qulf ham shu tur). Bir nechta toʻgʻri variant ; bilan."),
         ("Mantiqiy", "Mantiqiy masala yoki ketma-ketlik, variantli (A/B/C/D)."),
+        ("Moslashtirish", "2–4 juftlik, har biri alohida katakda: “Chap = Oʻng”. Oʻng tomondagi javoblar takrorlanishi mumkin. "
+                          "Oʻquvchiga javoblar aralashtirib koʻrsatiladi; qisman toʻgʻri moslash qisman ball oladi."),
+        ("Koʻp bosqichli", "2–4 qadamli zanjir: har bir katak “Qadam matni || variant | variant | variant”, "
+                           "“Toʻgʻri javob” ustunida har bir qadam uchun harf (A, B, A). Keyingi qadam faqat oldingisi toʻgʻri boʻlsa ochiladi; "
+                           "toʻliq zanjir bonus ball beradi."),
     ]
     for k, v in types:
         ws.cell(row=row, column=1, value=k).font = Font(bold=True)
@@ -191,6 +206,12 @@ def main():
             correct = "; ".join(q["correct_answer"])
         elif t == "true_false":
             correct = "Toʻgʻri" if q["correct_answer"] == 0 else "Notoʻgʻri"
+        elif t == "matching":
+            opts = [f"{left} = {right}" for left, right in zip(q["options"], q["correct_answer"])]
+            correct = ""
+        elif t == "multi_step":
+            opts = [f"{st['text']} || {' | '.join(st['options'])}" for st in q["options"]]
+            correct = ", ".join(letters[i] for i in q["correct_answer"])
         else:
             correct = letters[q["correct_answer"]]
         rows.append([

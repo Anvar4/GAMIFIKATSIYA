@@ -7,7 +7,18 @@ import { AnimatedNumber, ConnectionBadge, ErrorState, LoadingScreen, Logo, Space
 import { SoundControls } from '../../components/ui/SoundControls';
 import { SpaceshipCard } from '../../components/game/TeamScoreboard';
 import { CountdownTimer } from '../../components/game/CountdownTimer';
-import { AnswerOption, QuestionImage, ShortAnswerInput, formatCorrectAnswer, isChoiceType, optionState, OPTION_LETTERS } from '../../components/game/QuestionCard';
+import {
+  AnswerOption,
+  MatchingInput,
+  MultiStepPanel,
+  QuestionImage,
+  ShortAnswerInput,
+  StepsReveal,
+  formatCorrectAnswer,
+  isChoiceType,
+  optionState,
+  OPTION_LETTERS,
+} from '../../components/game/QuestionCard';
 import { EnergyBar, ShieldBar } from '../../components/game/Meters';
 import { AbilityPanel } from '../../components/game/AbilityPanel';
 import { Leaderboard } from '../../components/game/VictoryScreen';
@@ -20,7 +31,8 @@ import { ensureStudentSession, getStudentClient } from '../../lib/supabase';
 import { errorMessage } from '../../lib/errors';
 import { syncClock } from '../../lib/clock';
 import { soundEngine } from '../../lib/sound';
-import { isFullSnapshot, requestAbility, submitAnswer } from '../../services/api';
+import { isFullSnapshot, requestAbility, submitAnswer, submitStep } from '../../services/api';
+import { parseMatchingAnswer, stringOptions } from '../../game/questionShape';
 import { ABILITIES, AWARDS, AWARD_ORDER, TEAM_COLORS, roundMeta } from '../../game/constants';
 import { accuracy } from '../../game/scoring';
 import type { AbilityType, GameEvent, RoomSnapshot, RoundProgress } from '../../game/types';
@@ -51,7 +63,7 @@ export default function Play() {
     [sound],
   );
 
-  const { snapshot, loading, error, connection } = useRoomSnapshot(ready ? client : null, roomId, onEvent);
+  const { snapshot, loading, error, connection, refresh } = useRoomSnapshot(ready ? client : null, roomId, onEvent);
   const me = snapshot?.me ?? null;
   const online = usePresence(ready ? client : null, roomId, me && (me.status === 'approved' || me.status === 'pending') ? me.id : null, { role: 'student' });
   void online;
@@ -137,7 +149,7 @@ export default function Play() {
         ) : s.room.status === 'finished' ? (
           <StudentResults s={s} />
         ) : (
-          <StudentGame s={s} timer={timer} onError={(m) => toast(m, 'error')} />
+          <StudentGame s={s} timer={timer} onError={(m) => toast(m, 'error')} onRefresh={refresh} />
         )}
       </div>
     </main>
@@ -184,7 +196,17 @@ function StudentLobby({ s }: { s: RoomSnapshot }) {
   );
 }
 
-function StudentGame({ s, timer, onError }: { s: RoomSnapshot; timer: ReturnType<typeof useQuestionTimer>; onError: (m: string) => void }) {
+function StudentGame({
+  s,
+  timer,
+  onError,
+  onRefresh,
+}: {
+  s: RoomSnapshot;
+  timer: ReturnType<typeof useQuestionTimer>;
+  onError: (m: string) => void;
+  onRefresh: () => void;
+}) {
   const client = getStudentClient();
   const q = s.question;
   const team = s.teams.find((t) => t.id === s.me?.team_id)!;
@@ -192,13 +214,27 @@ function StudentGame({ s, timer, onError }: { s: RoomSnapshot; timer: ReturnType
   const now = useServerNow(1000);
   const sound = soundEngine('student');
   const [selected, setSelected] = useState<string>('');
+  const [matchSel, setMatchSel] = useState<number[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [requesting, setRequesting] = useState(false);
+  /** yuborilgan qadam indeksi — snapshot yangilanguncha panel band turadi */
+  const [awaitingStep, setAwaitingStep] = useState<number | null>(null);
   const qid = q?.id ?? null;
+  const leftItems = q?.question_type === 'matching' ? stringOptions(q.options) : [];
 
   useEffect(() => {
     setSelected('');
+    setMatchSel(leftItems.map(() => -1));
+    setAwaitingStep(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qid]);
+
+  // snapshot yangi qadamni koʻrsatganda kutish holati tugaydi
+  const stepState = s.my_steps ?? null;
+  useEffect(() => {
+    if (awaitingStep === null) return;
+    if (!stepState || stepState.finished || (stepState.current && stepState.current.index !== awaitingStep)) setAwaitingStep(null);
+  }, [stepState, awaitingStep]);
 
   const mine = s.my_answer;
   const locked = Boolean(mine) || q?.status !== 'active' || s.room.status !== 'active' || timer.phase === 'discussion' || timer.phase === 'expired';
@@ -214,18 +250,45 @@ function StudentGame({ s, timer, onError }: { s: RoomSnapshot; timer: ReturnType
     }
   }, [revealed, qid, mine, sound]);
 
+  const isMatching = q?.question_type === 'matching';
+  const isMultiStep = q?.question_type === 'multi_step';
+  const matchingReady = isMatching && matchSel.length > 0 && matchSel.every((v) => v >= 0);
+  const answerText = isMatching ? (matchingReady ? JSON.stringify(matchSel) : '') : selected.trim();
+
   const submit = useCallback(async () => {
-    if (!q || locked || !selected.trim() || submitting) return;
+    if (!q || locked || !answerText || submitting) return;
     setSubmitting(true);
     try {
-      const r = await submitAnswer(client, q.id, selected.trim());
+      const r = await submitAnswer(client, q.id, answerText);
       if (r.accepted || r.duplicate) sound.play('submit');
+      onRefresh();
     } catch (e) {
       onError(errorMessage(e));
     } finally {
       setSubmitting(false);
     }
-  }, [client, q, locked, selected, submitting, sound, onError]);
+  }, [client, q, locked, answerText, submitting, sound, onError, onRefresh]);
+
+  const sendStep = useCallback(
+    async (step: number, choice: number) => {
+      if (!q || submitting) return;
+      setSubmitting(true);
+      try {
+        const r = await submitStep(client, q.id, step, String(choice));
+        if (r.accepted) {
+          sound.play(r.correct ? 'submit' : 'wrong');
+          setAwaitingStep(step);
+        }
+        onRefresh();
+      } catch (e) {
+        onError(errorMessage(e));
+        onRefresh();
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [client, q, submitting, sound, onError, onRefresh],
+  );
 
   // klaviatura: 1–4 / A–D tanlash, Enter yuborish
   useEffect(() => {
@@ -302,7 +365,7 @@ function StudentGame({ s, timer, onError }: { s: RoomSnapshot; timer: ReturnType
               <div>
                 {isChoiceType(q.question_type) ? (
                   <div className="grid gap-2.5 sm:grid-cols-2">
-                    {(q.options ?? []).map((o, i) => (
+                    {stringOptions(q.options).map((o, i) => (
                       <AnswerOption
                         key={i}
                         index={i}
@@ -314,6 +377,34 @@ function StudentGame({ s, timer, onError }: { s: RoomSnapshot; timer: ReturnType
                       />
                     ))}
                   </div>
+                ) : isMatching ? (
+                  <MatchingInput
+                    left={leftItems}
+                    choices={q.input_spec?.choices ?? []}
+                    value={mine ? (parseMatchingAnswer(mine.selected_answer) ?? []) : matchSel}
+                    onChange={locked ? undefined : setMatchSel}
+                    disabled={locked}
+                    reveal={revealed && Array.isArray(q.correct_answer) ? q.correct_answer.map(String) : null}
+                  />
+                ) : isMultiStep ? (
+                  revealed ? (
+                    <StepsReveal
+                      steps={q.steps ?? []}
+                      correct={Array.isArray(q.correct_answer) ? q.correct_answer.map(Number) : []}
+                      mine={stepState?.done ?? []}
+                    />
+                  ) : stepState ? (
+                    <MultiStepPanel
+                      state={stepState}
+                      disabled={s.room.status !== 'active' || timer.phase === 'discussion' || timer.phase === 'expired'}
+                      busy={submitting || awaitingStep !== null}
+                      onSubmit={(step, choice) => void sendStep(step, choice)}
+                    />
+                  ) : (
+                    <div className="flex justify-center py-6">
+                      <Spinner />
+                    </div>
+                  )
                 ) : (
                   <ShortAnswerInput spec={q.input_spec} value={mine?.selected_answer ?? selected} onChange={setSelected} onSubmit={() => void submit()} disabled={locked} />
                 )}
@@ -321,6 +412,7 @@ function StudentGame({ s, timer, onError }: { s: RoomSnapshot; timer: ReturnType
             </div>
 
             {!revealed &&
+              !isMultiStep &&
               (mine ? (
                 <div className="mt-5 flex items-center justify-center gap-2 rounded-xl border border-arena-cyan/40 bg-arena-cyan/10 px-4 py-3 font-semibold text-arena-cyan" role="status">
                   <CheckCircle2 className="h-5 w-5" /> Javobingiz qabul qilindi! Natijani kuting…
@@ -328,7 +420,7 @@ function StudentGame({ s, timer, onError }: { s: RoomSnapshot; timer: ReturnType
               ) : timer.phase === 'expired' ? (
                 <div className="mt-5 rounded-xl border border-white/10 bg-space-950/50 px-4 py-3 text-center text-arena-muted">Vaqt tugadi</div>
               ) : (
-                <button className="btn btn-primary btn-lg mt-5 w-full" disabled={locked || !selected.trim() || submitting} onClick={() => void submit()}>
+                <button className="btn btn-primary btn-lg mt-5 w-full" disabled={locked || !answerText || submitting} onClick={() => void submit()}>
                   {submitting ? <Spinner /> : <Send className="h-5 w-5" />} JAVOBNI YUBORISH
                 </button>
               ))}
@@ -341,7 +433,18 @@ function StudentGame({ s, timer, onError }: { s: RoomSnapshot; timer: ReturnType
                       <CheckCircle2 className="h-9 w-9 text-arena-success" />
                       <div>
                         <div className="font-display text-xl font-bold text-arena-success">Toʻgʻri!</div>
-                        <div className="text-sm">+{mine.awarded_points ?? 0} ball • kemangiz energiya oldi</div>
+                        <div className="text-sm">
+                          +{mine.awarded_points ?? 0} ball • kemangiz energiya oldi
+                          {isMultiStep && ' • toʻliq zanjir bonusi bilan'}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (mine.awarded_points ?? 0) > 0 ? (
+                    <div className="flex items-center gap-3 rounded-2xl border border-arena-warning/50 bg-arena-warning/10 p-4">
+                      <Target className="h-9 w-9 text-arena-warning" />
+                      <div>
+                        <div className="font-display text-xl font-bold text-arena-warning">Qisman toʻgʻri ({Math.round((mine.credit ?? 0) * 100)}%)</div>
+                        <div className="text-sm">+{mine.awarded_points} ball</div>
                       </div>
                     </div>
                   ) : (
@@ -349,13 +452,21 @@ function StudentGame({ s, timer, onError }: { s: RoomSnapshot; timer: ReturnType
                       <XCircle className="h-9 w-9 text-arena-red" />
                       <div>
                         <div className="font-display text-xl font-bold text-arena-red">Notoʻgʻri</div>
-                        <div className="text-sm">Toʻgʻri javob: {formatCorrectAnswer(q.question_type, q.options, q.correct_answer)}</div>
+                        {!isMatching && !isMultiStep && (
+                          <div className="text-sm">Toʻgʻri javob: {formatCorrectAnswer(q.question_type, q.options, q.correct_answer)}</div>
+                        )}
                       </div>
                     </div>
                   )
                 ) : (
                   <div className="rounded-2xl border border-white/10 bg-space-950/50 p-4 text-arena-muted">
-                    Siz javob bermadingiz. Toʻgʻri javob: <b className="text-arena-text">{formatCorrectAnswer(q.question_type, q.options, q.correct_answer)}</b>
+                    Siz javob bermadingiz.
+                    {!isMatching && !isMultiStep && (
+                      <>
+                        {' '}
+                        Toʻgʻri javob: <b className="text-arena-text">{formatCorrectAnswer(q.question_type, q.options, q.correct_answer)}</b>
+                      </>
+                    )}
                   </div>
                 )}
                 {q.explanation && (

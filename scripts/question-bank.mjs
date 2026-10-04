@@ -8,12 +8,16 @@
 //   q  — savol matni, o — variantlar (birinchisi toʻgʻri),
 //   a  — true_false uchun true/false; short_answer uchun qabul qilinadigan javoblar,
 //   e  — izoh, h — maslahat (HINT SCAN), img — /assets/devices/<img>.webp, r — tavsiya etilgan raund
+//   pairs — moslashtirish (matching) uchun [chap, oʻng] juftliklar
+//   steps — koʻp bosqichli zanjir uchun [{ q, o }] (har bir qadamda o[0] — toʻgʻri javob)
 
 const TF = 'true_false';
 const SC = 'single_choice';
 const IMG = 'image_identification';
 const SA = 'short_answer';
 const LP = 'logical_puzzle';
+const MATCH = 'matching';
+const CHAIN = 'multi_step';
 
 export const QUESTION_BANK = [
   // =================================================================
@@ -1036,5 +1040,241 @@ export const QUESTION_BANK = [
     o: ['3D chop etish', 'Matritsali printer', 'Disketa', 'Elektron-nurli (CRT) monitor'],
     e: '3D printerlar shaxsga moslashtirilgan protezlar, ehtiyot qismlar va prototiplarni tez yasash imkonini beradi.',
     h: 'U qatlamma-qatlam “quradi”.',
+  },
+
+  // =================================================================
+  // QOʻSHIMCHA SAVOLLAR (bankning oxiriga qoʻshiladi — mavjud savollar
+  // variantlarining tartibi oʻzgarmasligi uchun). Raund `r` maydonida.
+  // =================================================================
+
+  // --- Higgsfield'da yaratilgan qoʻshimcha rasmlar (bevosita kiritish, chiqarish, saqlash, kompyuter turlari) ---
+  {
+    c: 'direct_entry', d: 'medium', t: IMG, r: 2, img: 'magnetic_stripe_reader',
+    q: 'Rasmdagi qurilma bank kartasidan maʼlumotni qanday oʻqiydi?',
+    o: ['Kartadagi magnit tasmani oʻqib', 'Kartani rasmga olib', 'Ovozli buyruq orqali', 'Kartadagi yozuvni chop etib'],
+    e: 'Magnit tasmali karta oʻquvchi karta tirqishdan oʻtkazilganda magnit tasmadagi maʼlumotni avtomatik oʻqiydi — bu bevosita maʼlumot kiritish usuli.',
+    h: 'Kartaning orqa tomonidagi qora chiziqqa eʼtibor bering.',
+  },
+  {
+    c: 'direct_entry', d: 'medium', t: IMG, r: 2, img: 'rfid_reader',
+    q: 'Rasmdagi qurilma qaysi texnologiya asosida ishlaydi?',
+    o: ['RFID — radiochastotali identifikatsiya', 'Shtrix-kod', 'OMR — optik belgilarni tanish', 'Lazerli chop etish'],
+    e: 'RFID oʻquvchi karta yoki brelok ichidagi mikrochipdan maʼlumotni radio toʻlqinlar orqali kontaktsiz oʻqiydi: kirish tizimlari, kutubxonalar, transport kartalari.',
+    h: 'Kartani tegizmasdan yaqinlashtirishning oʻzi kifoya.',
+  },
+  {
+    c: 'direct_entry', d: 'medium', t: IMG, r: 2, img: 'omr_sheet',
+    q: 'Rasmdagi test javob varaqasi qaysi usul bilan avtomatik tekshiriladi?',
+    o: ['OMR — optik belgilarni tanish', 'OCR — matnni tanish', 'MICR — magnit siyohli belgilarni tanish', 'RFID'],
+    e: 'OMR (Optical Mark Recognition) qurilmasi qalam bilan boʻyalgan doirachalar joyini aniqlaydi. Test va soʻrovnomalar shu usulda tez tekshiriladi.',
+    h: 'Muhimi — matn emas, boʻyalgan doirachalar.',
+  },
+  {
+    c: 'direct_entry', d: 'easy', t: IMG, r: 2, img: 'qr_scan',
+    q: 'Rasmda smartfon kamerasi nimani skanerlamoqda?',
+    o: ['QR-kodni', 'Barmoq izini', 'Magnit tasmani', 'Ovozni'],
+    e: 'QR-kod — ikki oʻlchamli shtrix-kod. Uni smartfon kamerasi oʻqiydi; unda havola, matn yoki toʻlov maʼlumoti boʻlishi mumkin.',
+    h: 'Kvadrat shakldagi qora-oq naqsh.',
+  },
+  {
+    c: 'input_devices', d: 'medium', t: IMG, r: 2, img: 'fingerprint_scanner',
+    q: 'Rasmdagi qurilma foydalanuvchini nimasiga qarab aniqlaydi?',
+    o: ['Barmoq iziga', 'Ovoziga', 'Yozgan matniga', 'Kiyimining rangiga'],
+    e: 'Biometrik skaner har bir insonda takrorlanmas boʻlgan barmoq izini oʻqiydi. U kirishni nazorat qilish va qurilmani qulfdan ochishda ishlatiladi.',
+    h: 'Biometrik maʼlumot.',
+  },
+  {
+    c: 'output_devices', d: 'medium', t: IMG, r: 2, img: 'inkjet_printer',
+    q: 'Rasmdagi printer tasvirni qanday hosil qiladi?',
+    o: ['Mayda siyoh tomchilarini qogʻozga purkab', 'Lazer nuri va kukun (toner) yordamida', 'Ignalar bilan lentaga urib', 'Plastikni qatlamma-qatlam eritib'],
+    e: 'Purkagichli (inkjet) printer kartrijlardagi siyohni juda mayda tomchilar holida qogʻozga purkaydi. Rangli fotosuratlarni chop etish uchun qulay.',
+    h: 'Rangli siyoh kartrijlariga qarang.',
+  },
+  {
+    c: 'output_devices', d: 'hard', t: IMG, r: 2, img: 'plotter',
+    q: 'Katta chizmalarni chiqaruvchi rasmdagi qurilma qanday ataladi?',
+    o: ['Plotter', 'Proyektor', 'Skaner', 'Matritsali printer'],
+    e: 'Plotter katta formatdagi chizmalar, xaritalar va plakatlarni yuqori aniqlikda chiqaradi. Uni muhandislar va arxitektorlar ishlatadi.',
+    h: 'Arxitektorlar chizmasi uchun.',
+  },
+  {
+    c: 'input_devices', d: 'easy', t: IMG, r: 2, img: 'touchscreen',
+    q: 'Rasmdagi sensorli ekran qanday qurilma hisoblanadi?',
+    o: ['Ham kiritish, ham chiqarish qurilmasi', 'Faqat kiritish qurilmasi', 'Faqat chiqarish qurilmasi', 'Saqlash qurilmasi'],
+    e: 'Sensorli ekran tasvirni koʻrsatadi (chiqarish) va barmoq teginishini qabul qiladi (kiritish).',
+    h: 'U ham koʻrsatadi, ham teginishni sezadi.',
+  },
+  {
+    c: 'input_devices', d: 'medium', t: IMG, r: 2, img: 'trackball',
+    q: 'Rasmdagi koʻrsatkich qurilmasi qanday ataladi?',
+    o: ['Trekbol', 'Joystik', 'Sensorli panel (touchpad)', 'Grafik planshet'],
+    e: 'Trekbolda shar barmoq bilan aylantiriladi, qurilmaning oʻzi esa joyida turadi. U kam joy egallaydi va qoʻl harakati cheklangan foydalanuvchilarga qulay.',
+    h: 'Sichqonchaga oʻxshaydi, lekin ustida katta shar bor.',
+  },
+  {
+    c: 'input_devices', d: 'easy', t: IMG, r: 2, img: 'digital_camera',
+    q: 'Rasmdagi raqamli fotoapparat qaysi turdagi qurilma?',
+    o: ['Kiritish qurilmasi', 'Chiqarish qurilmasi', 'Saqlash qurilmasi', 'Tarmoq qurilmasi'],
+    e: 'Raqamli fotoapparat tasvirni raqamli maʼlumotga aylantiradi va xotira kartasiga yozadi; keyin rasmlar kompyuterga kiritiladi.',
+    h: 'U tasvirni raqamlarga aylantiradi.',
+  },
+  {
+    c: 'storage_pros_cons', d: 'hard', t: IMG, r: 2, img: 'magnetic_tape',
+    q: 'Rasmdagi magnit lenta kartrijlari asosan nima uchun ishlatiladi?',
+    o: [
+      'Katta hajmdagi maʼlumotlarning zaxira nusxasini saqlash uchun',
+      'Musiqa tinglash uchun',
+      'Matnni chop etish uchun',
+      'Internetga ulanish uchun',
+    ],
+    e: 'Magnit lenta arzon va juda katta sigʻimli, lekin maʼlumotga faqat ketma-ket kirish mumkin. Shuning uchun u server maʼlumotlarini zaxiralash (arxivlash) uchun ishlatiladi.',
+    h: 'Maʼlumotlar markazlari tungi zaxira nusxalar uchun foydalanadi.',
+  },
+  {
+    c: 'system_components', d: 'medium', t: IMG, r: 2, img: 'motherboard',
+    q: 'Rasmdagi kompyuter qismi qanday ataladi?',
+    o: ['Ona plata (motherboard)', 'Videokarta', 'Quvvat bloki', 'Qattiq disk'],
+    e: 'Ona plata — kompyuterning asosiy platasi: unga protsessor, operativ xotira, kengaytirish platalari va portlar ulanadi.',
+    h: 'Barcha qismlar unga ulanadi.',
+  },
+  {
+    c: 'computer_types', d: 'medium', t: IMG, r: 2, img: 'server_rack',
+    q: 'Rasmdagi shkafda qaysi turdagi kompyuterlar joylashgan?',
+    o: ['Serverlar', 'Planshetlar', 'Noutbuklar', 'Oʻyin konsollari'],
+    e: 'Serverlar boshqa kompyuterlarga xizmat koʻrsatadi: saytlar, pochta va maʼlumotlar bazalarini saqlaydi. Ular maxsus shkaflarda kecha-kunduz ishlaydi.',
+    h: 'Ular maʼlumotlar markazida turadi.',
+  },
+  {
+    c: 'computer_types', d: 'easy', t: IMG, r: 2, img: 'laptop',
+    q: 'Rasmdagi kompyuter turi qanday ataladi?',
+    o: ['Noutbuk (laptop)', 'Stol kompyuteri', 'Mainframe', 'Smart soat'],
+    e: 'Noutbuk — klaviatura, sensorli panel, ekran va batareya bitta korpusda boʻlgan koʻchma kompyuter.',
+    h: 'U ochiladi va yopiladi.',
+  },
+  {
+    c: 'new_technologies', d: 'easy', t: IMG, r: 2, img: 'smartwatch',
+    q: 'Rasmdagi qurilma qaysi turdagi texnologiyaga kiradi?',
+    o: ['Taqiladigan (wearable) qurilma', 'Saqlash qurilmasi', 'Chop etish qurilmasi', 'Tarmoq kabeli'],
+    e: 'Smart soat — qoʻlga taqiladigan kichik kompyuter: yurak urishi va qadamlarni oʻlchaydi, smartfon bilan bogʻlanadi.',
+    h: 'U qoʻlga taqiladi.',
+  },
+  {
+    c: 'new_technologies', d: 'medium', t: IMG, r: 2, img: 'robot_arm',
+    q: 'Rasmdagi sanoat robot-qoʻli zavodlarda qanday foyda beradi?',
+    o: [
+      'Takrorlanuvchi ishlarni tez va aniq bajaradi (yigʻish, payvandlash)',
+      'Faqat matn chop etadi',
+      'Faqat musiqa ijro etadi',
+      'Internet tarqatadi',
+    ],
+    e: 'Sanoat robotlari kompyuter dasturi boʻyicha ishlaydi: charchamaydi, kam xato qiladi va xavfli ishlarni bajaradi. Bu ishlab chiqarishni avtomatlashtiradi.',
+    h: 'Avtomatlashtirish.',
+  },
+
+  // --- Moslashtirish (matching) va koʻp bosqichli zanjirlar ---
+  {
+    c: 'input_devices', d: 'medium', t: MATCH, r: 4,
+    q: 'MOSLASHTIRISH: Qurilmalarni vazifasiga moslang.',
+    pairs: [
+      ['Klaviatura', 'Kiritish'],
+      ['Printer', 'Chiqarish'],
+      ['Fleshka', 'Saqlash'],
+      ['Mikrofon', 'Kiritish'],
+    ],
+    e: 'Kiritish qurilmalari maʼlumotni kompyuterga kiritadi, chiqarish qurilmalari natijani koʻrsatadi, saqlash qurilmalari maʼlumotni uzoq saqlaydi.',
+    h: 'Maʼlumot qaysi tomonga harakatlanadi?',
+  },
+  {
+    c: 'storage_devices', d: 'medium', t: MATCH, r: 4,
+    q: 'MOSLASHTIRISH: Saqlash qurilmalarini ishlash usuliga moslang.',
+    pairs: [
+      ['Qattiq disk (HDD)', 'Magnit'],
+      ['DVD disk', 'Optik (lazer)'],
+      ['SSD', 'Flesh-xotira'],
+      ['Magnit lenta', 'Magnit'],
+    ],
+    e: 'HDD va lenta maʼlumotni magnitlangan sirtga yozadi, CD/DVD lazer nuri bilan oʻqiladi, SSD va fleshka esa harakatlanuvchi qismlarsiz flesh-xotiradan foydalanadi.',
+    h: 'Magnit, lazer yoki mikrosxema?',
+  },
+  {
+    c: 'devices_software', d: 'medium', t: MATCH, r: 4,
+    q: 'MOSLASHTIRISH: Dasturlarni turiga moslang.',
+    pairs: [
+      ['Windows', 'Operatsion tizim'],
+      ['Matn muharriri', 'Amaliy dastur'],
+      ['Antivirus', 'Utilita (xizmat dasturi)'],
+      ['Linux', 'Operatsion tizim'],
+    ],
+    e: 'Operatsion tizim kompyuterni boshqaradi, amaliy dasturlar foydalanuvchi vazifasini bajaradi, utilitalar esa tizimga xizmat koʻrsatadi (himoya, tozalash, arxivlash).',
+    h: 'Kim kompyuterni boshqaradi, kim foydalanuvchiga xizmat qiladi?',
+  },
+  {
+    c: 'direct_entry', d: 'hard', t: MATCH, r: 4,
+    q: 'MOSLASHTIRISH: Bevosita kiritish usullarini qoʻllanish joyiga moslang.',
+    pairs: [
+      ['Shtrix-kod skaneri', 'Doʻkon kassasi'],
+      ['OMR', 'Test varaqalarini tekshirish'],
+      ['RFID', 'Kontaktsiz kirish kartasi'],
+      ['Chip va PIN', 'Bank kartasi bilan toʻlov'],
+    ],
+    e: 'Bevosita kiritish qurilmalari maʼlumotni klaviaturasiz, tez va xatosiz kiritadi: shtrix-kod — tovarlar, OMR — belgilangan javoblar, RFID — radio metkalar, chip va PIN — bank kartasi.',
+    h: 'Har bir texnologiya qayerda koʻp uchraydi?',
+  },
+  {
+    c: 'computer_types', d: 'medium', t: MATCH, r: 4,
+    q: 'MOSLASHTIRISH: Kompyuter turlarini tavsifiga moslang.',
+    pairs: [
+      ['Mainframe', 'Minglab foydalanuvchiga xizmat qiluvchi kuchli kompyuter'],
+      ['Noutbuk', 'Batareyali koʻchma kompyuter'],
+      ['Smartfon', 'Choʻntakdagi mobil qurilma'],
+      ['Stol kompyuteri', 'Doimiy joyda turadigan shaxsiy kompyuter'],
+    ],
+    e: 'Kompyuterlar oʻlchami, quvvati va koʻchmaligi boʻyicha farq qiladi.',
+    h: 'Eng kattasi va eng kichigini toping.',
+  },
+  {
+    c: 'output_devices', d: 'medium', t: CHAIN, r: 4,
+    q: 'NOSOZLIK ZANJIRI: Printer hujjatni chop etmayapti. Muammoni bosqichma-bosqich toping.',
+    steps: [
+      { q: 'Avval nimani tekshirasiz?', o: ['Printer yoqilgan va kompyuterga ulanganini', 'Kompyuter protsessorini', 'Monitor yorugʻligini'] },
+      { q: 'Printer yoqilgan va ulangan, lekin ekranda “Qogʻoz tugadi” xabari chiqdi. Nima qilasiz?', o: ['Lotokka qogʻoz solaman', 'Operatsion tizimni qayta oʻrnataman', 'Klaviaturani almashtiraman'] },
+      { q: 'Qogʻoz solindi, lekin sahifa juda xira chiqyapti. Ehtimoliy sabab?', o: ['Siyoh yoki toner tugayapti', 'Sichqoncha buzilgan', 'Internet sekin'] },
+    ],
+    e: 'Nosozlik eng oddiy sabablardan boshlab tekshiriladi: quvvat va ulanish → qogʻoz → siyoh yoki toner.',
+    h: 'Oddiydan murakkabga.',
+  },
+  {
+    c: 'storage_devices', d: 'hard', t: CHAIN, r: 4,
+    q: 'RAQAMLI ZANJIR: Hajmi 2 GB boʻlgan videoni 8 GB lik fleshkaga yozmoqchisiz. Hisobni qadamma-qadam bajaring.',
+    steps: [
+      { q: '1 GB necha MB ga teng?', o: ['1024 MB', '1000 KB', '100 MB', '8 MB'] },
+      { q: 'Demak, 2 GB lik video necha MB?', o: ['2048 MB', '1024 MB', '4096 MB', '2000 KB'] },
+      { q: '8 GB lik fleshkaga shunday videolardan nechtasi sigʻadi?', o: ['4 ta', '2 ta', '8 ta', '16 ta'] },
+    ],
+    e: '1 GB = 1024 MB, shuning uchun 2 GB = 2048 MB. 8 GB ÷ 2 GB = 4 ta video.',
+    h: 'Har bir birlik oldingisidan 1024 marta katta.',
+  },
+
+  {
+    c: 'operating_systems', d: 'hard', t: CHAIN, r: 5,
+    q: 'BOSS ZANJIRI: Kompyuter yoqilgandan to dastur ishga tushguncha nima sodir boʻladi?',
+    steps: [
+      { q: 'Kompyuter yoqilganda birinchi boʻlib nima ishga tushadi?', o: ['BIOS/UEFI — qurilmalarni tekshiradi', 'Matn muharriri', 'Brauzer'] },
+      { q: 'Shundan keyin qaysi dastur xotiraga yuklanadi?', o: ['Operatsion tizim', 'Antivirus bazasi', 'Fotosuratlar papkasi'] },
+      { q: 'Foydalanuvchi dastur belgisini bosganda uni nima ishga tushiradi?', o: ['Operatsion tizim — dasturni xotiraga yuklaydi', 'Monitor', 'Sichqoncha'] },
+    ],
+    e: 'Yuklanish ketma-ketligi: BIOS/UEFI qurilmalarni tekshiradi → operatsion tizim yuklanadi → OT foydalanuvchi dasturlarini xotiraga yuklab ishga tushiradi.',
+    h: 'Avval apparat, keyin OT, keyin dasturlar.',
+  },
+  {
+    c: 'direct_entry', d: 'hard', t: CHAIN, r: 5,
+    q: 'BOSS ZANJIRI: Xaridor doʻkonda tovar sotib olmoqda. Maʼlumot qanday harakatlanishini kuzating.',
+    steps: [
+      { q: 'Kassir tovarni qanday tez kiritadi?', o: ['Shtrix-kodni skaner bilan oʻqiydi', 'Nomini klaviaturada yozadi', 'Mikrofonga aytadi'] },
+      { q: 'Tovar narxi qayerdan olinadi?', o: ['Doʻkonning maʼlumotlar bazasidan', 'Xaridorning telefonidan', 'Printer xotirasidan'] },
+      { q: 'Xaridor bank kartasi bilan toʻlaydi. Karta maʼlumoti qanday oʻqiladi?', o: ['Chip va PIN yoki kontaktsiz (NFC) terminal orqali', 'Skaner bilan rasmga olib', 'Kassir qoʻlda yozib'] },
+    ],
+    e: 'Doʻkonda maʼlumot avtomatik kiritiladi: shtrix-kod → maʼlumotlar bazasidan narx → chip va PIN yoki NFC orqali toʻlov.',
+    h: 'Har qadamda eng tez va xatosiz usulni tanlang.',
   },
 ];

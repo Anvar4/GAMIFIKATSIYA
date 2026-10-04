@@ -9,7 +9,8 @@ import { TeamScoreboard, SpaceshipCard } from '../../components/game/TeamScorebo
 import { BattleZone, type BattleFx } from '../../components/game/BattleZone';
 import { RoundBanner } from '../../components/game/RoundBanner';
 import { CountdownTimer } from '../../components/game/CountdownTimer';
-import { AnswerOption, QuestionImage, formatCorrectAnswer, isChoiceType, optionState } from '../../components/game/QuestionCard';
+import { AnswerOption, MatchingBoard, QuestionImage, StepsReveal, formatCorrectAnswer, isChoiceType, optionState } from '../../components/game/QuestionCard';
+import { stringOptions } from '../../game/questionShape';
 import { RoomCodeDisplay } from '../../components/game/RoomCodeDisplay';
 import { GameEventFeed } from '../../components/game/GameEventFeed';
 import { VictoryScreen } from '../../components/game/VictoryScreen';
@@ -314,7 +315,7 @@ function ArenaQuestion({ s, timer }: { s: RoomSnapshot; timer: ReturnType<typeof
   const correct = revealed && typeof q.correct_answer === 'number' ? q.correct_answer : null;
   const approved = s.players.filter((p) => p.status === 'approved' && p.team_id).length;
   const teams = [...s.teams].sort((a, b) => a.slot - b.slot);
-  const options = q.options ?? [];
+  const options = stringOptions(q.options);
   return (
     <div className="glass flex h-full flex-col gap-4 rounded-3xl p-5">
       <div className="flex items-start gap-5">
@@ -348,6 +349,20 @@ function ArenaQuestion({ s, timer }: { s: RoomSnapshot; timer: ReturnType<typeof
                 <AnswerOption key={i} index={i} text={o} size="xl" state={optionState(i, { revealed, correct })} />
               ))}
             </div>
+          ) : q.question_type === 'matching' ? (
+            <MatchingBoard
+              left={options}
+              choices={q.input_spec?.choices ?? []}
+              reveal={revealed && Array.isArray(q.correct_answer) ? q.correct_answer.map(String) : null}
+            />
+          ) : q.question_type === 'multi_step' ? (
+            revealed ? (
+              <div className="min-h-0 overflow-y-auto pr-1 scrollbar-thin">
+                <StepsReveal steps={q.steps ?? []} correct={Array.isArray(q.correct_answer) ? q.correct_answer.map(Number) : []} large />
+              </div>
+            ) : (
+              <ChainProgress total={q.input_spec?.steps ?? 0} finished={q.answer_count} players={approved} />
+            )
           ) : (
             <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-space-950/50 p-6 text-center">
               <Lock className={clsx('h-14 w-14', revealed ? 'text-arena-success' : 'text-arena-cyan')} />
@@ -364,7 +379,7 @@ function ArenaQuestion({ s, timer }: { s: RoomSnapshot; timer: ReturnType<typeof
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-[1fr_auto] gap-3">
               <div className="rounded-2xl border border-arena-success/30 bg-arena-success/10 p-3 text-lg leading-snug">
                 <b className="text-arena-success">Izoh: </b>
-                {q.explanation || formatCorrectAnswer(q.question_type, options, q.correct_answer)}
+                {q.explanation || formatCorrectAnswer(q.question_type, q.options, q.correct_answer, q.steps)}
               </div>
               <div className="flex gap-2">
                 {teams.map((t) => {
@@ -384,6 +399,29 @@ function ArenaQuestion({ s, timer }: { s: RoomSnapshot; timer: ReturnType<typeof
             </motion.div>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+/** Koʻp bosqichli zanjir: katta ekranda qadamlar sirli qoladi, faqat progress koʻrinadi */
+function ChainProgress({ total, finished, players }: { total: number; finished: number; players: number }) {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-5 rounded-2xl border border-white/10 bg-space-950/50 p-6 text-center">
+      <div className="flex items-center gap-2">
+        {Array.from({ length: total }).map((_, i) => (
+          <span key={i} className="flex items-center gap-2">
+            <span className="flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-arena-cyan/50 bg-arena-cyan/10 font-logo text-2xl font-black text-arena-cyan">
+              {i + 1}
+            </span>
+            {i < total - 1 && <span className="h-1 w-10 rounded-full bg-gradient-to-r from-arena-cyan/60 to-arena-purple/60" />}
+          </span>
+        ))}
+        <Lock className="ml-2 h-10 w-10 text-arena-warning" />
+      </div>
+      <div className="text-2xl font-semibold">{total} qadamli zanjir — har bir qadam keyingisini ochadi</div>
+      <div className="text-lg text-arena-muted">
+        Zanjirni yakunlaganlar: <b className="text-arena-text">{finished}</b>/{players}
       </div>
     </div>
   );

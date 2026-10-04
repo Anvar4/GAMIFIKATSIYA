@@ -1,7 +1,7 @@
-import { Volume2, VolumeX } from 'lucide-react';
+import { Sparkles, Volume2, VolumeX, Waves } from 'lucide-react';
 import clsx from 'clsx';
 import type { SoundChannel } from '../../lib/sound';
-import { useSound } from '../../hooks/useUi';
+import { useReducedMotion, useSound } from '../../hooks/useUi';
 
 /** Ovoz faqat foydalanuvchi tugmani bosganida yoqiladi (avtomatik ijro yoʻq) */
 export function SoundControls({ channel, className, showSlider = true }: { channel: SoundChannel; className?: string; showSlider?: boolean }) {
@@ -31,5 +31,22 @@ export function SoundControls({ channel, className, showSlider = true }: { chann
         />
       )}
     </div>
+  );
+}
+
+/** Harakatni kamaytirish: animatsiyalar soddalashadi (sekin kompyuterlar va sezgir koʻzlar uchun) */
+export function MotionToggle({ className, showLabel = true }: { className?: string; showLabel?: boolean }) {
+  const [reduced, setReduced] = useReducedMotion();
+  return (
+    <button
+      type="button"
+      className={clsx('btn btn-sm btn-ghost', reduced && 'border-arena-cyan/50 text-arena-cyan', className)}
+      onClick={() => setReduced(!reduced)}
+      aria-pressed={reduced}
+      title={reduced ? 'Toʻliq animatsiyalarni yoqish' : 'Harakatni kamaytirish (animatsiyalarni soddalashtirish)'}
+    >
+      {reduced ? <Waves className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+      {showLabel && <span className="hidden sm:inline">{reduced ? 'Kam harakat' : 'Animatsiya'}</span>}
+    </button>
   );
 }
