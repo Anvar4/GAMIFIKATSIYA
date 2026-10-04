@@ -1,0 +1,44 @@
+{
+  "name": "it-arena-galaktik-jang",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "IT ARENA — Galaktik Jang: real vaqtli koʻp oʻyinchili taʼlimiy oʻyin",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit -p tsconfig.json && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:unit": "vitest run src",
+    "test:db": "vitest run tests/db",
+    "seed:sql": "node scripts/build-seed.mjs",
+    "assets": "python scripts/optimize_assets.py",
+    "template:excel": "python scripts/make_excel_template.py"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.2",
+    "clsx": "^2.1.1",
+    "framer-motion": "^14.0.0",
+    "lucide-react": "^1.52.0",
+    "qrcode.react": "^4.2.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-router-dom": "^7.18.4",
+    "read-excel-file": "^9.3.10",
+    "write-excel-file": "^4.1.1"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@types/node": "^26.6.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "autoprefixer": "^10.6.1",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.2",
+    "vitest": "^4.1.11"
+  }
+}

@@ -1,0 +1,262 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #07111f;
+  --bg-2: #0e1b2d;
+  --blue: #2583ff;
+  --red: #ff455a;
+  --cyan: #3ee7ff;
+  --success: #35d49a;
+  --warning: #ffc857;
+  --text: #f5f8ff;
+  --muted: #a8b7cc;
+  color-scheme: dark;
+}
+
+@layer base {
+  html,
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Exo 2', system-ui, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  ::selection {
+    background: rgba(62, 231, 255, 0.3);
+  }
+  :focus-visible {
+    outline: 2px solid var(--cyan);
+    outline-offset: 2px;
+  }
+  input,
+  select,
+  textarea {
+    color-scheme: dark;
+  }
+}
+
+@layer components {
+  .glass {
+    background: linear-gradient(180deg, rgba(20, 38, 62, 0.72), rgba(10, 22, 38, 0.78));
+    border: 1px solid rgba(62, 231, 255, 0.14);
+    box-shadow:
+      0 18px 50px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .glass-strong {
+    background: linear-gradient(180deg, rgba(14, 27, 45, 0.92), rgba(7, 17, 31, 0.94));
+    border: 1px solid rgba(62, 231, 255, 0.18);
+    backdrop-filter: blur(18px);
+  }
+  .hud-line {
+    background: linear-gradient(90deg, transparent, rgba(62, 231, 255, 0.55), transparent);
+    height: 1px;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold tracking-wide transition
+      disabled:cursor-not-allowed disabled:opacity-45 select-none;
+  }
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs rounded-lg;
+  }
+  .btn-lg {
+    @apply px-6 py-3.5 text-base;
+  }
+  .btn-primary {
+    @apply text-space-950;
+    background: linear-gradient(135deg, #3ee7ff, #2583ff);
+    box-shadow: 0 6px 22px rgba(37, 131, 255, 0.35);
+  }
+  .btn-primary:not(:disabled):hover {
+    filter: brightness(1.08);
+    box-shadow: 0 8px 28px rgba(62, 231, 255, 0.45);
+  }
+  .btn-danger {
+    @apply text-white;
+    background: linear-gradient(135deg, #ff6b7d, #e5243b);
+    box-shadow: 0 6px 22px rgba(255, 69, 90, 0.3);
+  }
+  .btn-danger:not(:disabled):hover {
+    filter: brightness(1.08);
+  }
+  .btn-success {
+    @apply text-space-950;
+    background: linear-gradient(135deg, #5ef0b8, #35d49a);
+  }
+  .btn-warning {
+    @apply text-space-950;
+    background: linear-gradient(135deg, #ffe08a, #ffc857);
+  }
+  .btn-ghost {
+    @apply border border-white/10 bg-white/5 text-arena-text;
+  }
+  .btn-ghost:not(:disabled):hover {
+    @apply border-arena-cyan/40 bg-arena-cyan/10;
+  }
+
+  .input {
+    @apply w-full rounded-xl border border-white/10 bg-space-950/60 px-3.5 py-2.5 text-sm text-arena-text placeholder:text-arena-muted/60
+      transition focus:border-arena-cyan/60 focus:outline-none focus:ring-2 focus:ring-arena-cyan/20;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-[0.12em] text-arena-muted;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold;
+  }
+  .kbd {
+    @apply rounded border border-white/20 bg-white/5 px-1.5 py-0.5 font-mono text-[0.7em] text-arena-muted;
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(62, 231, 255, 0.3) transparent;
+  }
+}
+
+/* ---------- Kosmik fon (yengil, CSS asosida) ---------- */
+.starfield {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.starfield::before,
+.starfield::after {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background-image:
+    radial-gradient(1px 1px at 20px 30px, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1px 1px at 140px 80px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1.5px 1.5px at 260px 160px, rgba(170, 220, 255, 0.9), transparent),
+    radial-gradient(1px 1px at 380px 40px, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1px 1px at 90px 220px, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1.5px 1.5px at 320px 280px, rgba(255, 210, 220, 0.8), transparent);
+  background-size: 420px 320px;
+  animation: drift 140s linear infinite;
+  opacity: 0.55;
+}
+.starfield::after {
+  background-size: 260px 220px;
+  animation-duration: 90s;
+  opacity: 0.35;
+}
+@keyframes drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-420px, -160px, 0);
+  }
+}
+
+.bg-arena {
+  background:
+    radial-gradient(ellipse at 15% 40%, rgba(37, 131, 255, 0.18), transparent 55%),
+    radial-gradient(ellipse at 85% 40%, rgba(255, 69, 90, 0.16), transparent 55%),
+    var(--bg);
+}
+
+/* ---------- Jang effektlari ---------- */
+.laser-beam {
+  position: absolute;
+  height: 0.35rem;
+  border-radius: 999px;
+  filter: drop-shadow(0 0 0.6rem currentColor) drop-shadow(0 0 1.4rem currentColor);
+  transform-origin: left center;
+}
+.shield-bubble {
+  position: absolute;
+  inset: -12%;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  background: radial-gradient(circle, transparent 55%, currentColor 140%);
+  opacity: 0.55;
+  box-shadow:
+    0 0 2rem currentColor,
+    inset 0 0 2.5rem currentColor;
+}
+.engine-glow {
+  animation: engine 1.6s ease-in-out infinite;
+}
+@keyframes engine {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 1.2rem var(--glow, #2583ff));
+  }
+  50% {
+    filter: drop-shadow(0 0 2.2rem var(--glow, #2583ff));
+  }
+}
+.hover-float {
+  animation: hover-float 5.5s ease-in-out infinite;
+}
+@keyframes hover-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-0.6rem) rotate(-0.6deg);
+  }
+}
+.timer-warning {
+  animation: timer-pulse 0.5s ease-in-out infinite alternate;
+}
+@keyframes timer-pulse {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.06);
+  }
+}
+.shine {
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.18) 50%, transparent 70%);
+  background-size: 250% 100%;
+  animation: shine 3.5s ease-in-out infinite;
+}
+@keyframes shine {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+.text-glow-cyan {
+  text-shadow: 0 0 1.2rem rgba(62, 231, 255, 0.55);
+}
+.text-glow-blue {
+  text-shadow: 0 0 1.2rem rgba(37, 131, 255, 0.7);
+}
+.text-glow-red {
+  text-shadow: 0 0 1.2rem rgba(255, 69, 90, 0.7);
+}
+
+/* ---------- Harakatni kamaytirish ---------- */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .starfield::before,
+  .starfield::after,
+  .hover-float,
+  .engine-glow {
+    animation: none;
+  }
+}

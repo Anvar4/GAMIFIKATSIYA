@@ -1,0 +1,16 @@
+node_modules
+dist
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea
+coverage
+assets-src
+supabase/.temp
+supabase/.branches
+__pycache__
