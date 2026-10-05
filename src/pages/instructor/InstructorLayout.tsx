@@ -4,6 +4,7 @@ import clsx from 'clsx';
 import { BookOpenCheck, LayoutDashboard, LogOut, Presentation } from 'lucide-react';
 import { Logo, SpaceBackground } from '../../components/ui/Basics';
 import { useInstructorAuth } from '../../context/InstructorAuth';
+import { MotionToggle } from '../../components/ui/SoundControls';
 
 export function InstructorLayout({ children, actions }: { children: ReactNode; actions?: ReactNode }) {
   const auth = useInstructorAuth();
@@ -40,6 +41,7 @@ export function InstructorLayout({ children, actions }: { children: ReactNode; a
           </nav>
           {actions}
           <div className="flex items-center gap-3">
+            <MotionToggle showLabel={false} />
             <span className="hidden text-sm text-arena-muted md:inline">{auth.profile?.display_name || auth.session?.user.email}</span>
             <button className="btn btn-ghost btn-sm" onClick={() => void auth.signOut()}>
               <LogOut className="h-4 w-4" /> Chiqish

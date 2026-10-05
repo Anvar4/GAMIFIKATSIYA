@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import clsx from 'clsx';
 import { Award, CheckCircle2, Flame, Hourglass, Lightbulb, PauseCircle, Send, Target, Trophy, Users, XCircle } from 'lucide-react';
 import { AnimatedNumber, ConnectionBadge, ErrorState, LoadingScreen, Logo, SpaceBackground, Spinner } from '../../components/ui/Basics';
-import { SoundControls } from '../../components/ui/SoundControls';
+import { MotionToggle, SoundControls } from '../../components/ui/SoundControls';
 import { SpaceshipCard } from '../../components/game/TeamScoreboard';
 import { CountdownTimer } from '../../components/game/CountdownTimer';
 import {
@@ -136,6 +136,7 @@ export default function Play() {
           )}
           <div className={clsx('flex items-center gap-2', (me.status !== 'approved' || s.room.status === 'lobby') && 'ml-auto')}>
             <SoundControls channel="student" showSlider={false} />
+            <MotionToggle showLabel={false} />
             <ConnectionBadge state={connection} compact />
           </div>
         </div>

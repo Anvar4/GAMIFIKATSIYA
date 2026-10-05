@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { roundMeta } from '../../game/constants';
+import { BOSS_SHIP } from '../../game/assets';
 import type { RoomSettings } from '../../game/types';
 
 export function RoundBanner({ round, settings, compact }: { round: number; settings?: RoomSettings | null; compact?: boolean }) {
@@ -16,6 +17,16 @@ export function RoundBanner({ round, settings, compact }: { round: number; setti
     >
       <img src={meta.banner} alt="" className="absolute inset-0 h-full w-full object-cover" />
       <div className="absolute inset-0 bg-gradient-to-r from-space-950/95 via-space-950/70 to-space-950/30" />
+      {round === 5 && (
+        <motion.img
+          src={BOSS_SHIP}
+          alt=""
+          className="pointer-events-none absolute -right-[4%] top-1/2 w-[48%] max-w-xl -translate-y-1/2 drop-shadow-[0_0_50px_rgba(166,107,255,0.7)]"
+          initial={{ opacity: 0, x: 80, scale: 0.85 }}
+          animate={{ opacity: 0.9, x: 0, scale: 1 }}
+          transition={{ duration: 1.2, delay: 0.3, ease: 'easeOut' }}
+        />
+      )}
       <div className={compact ? 'relative p-6' : 'relative p-10'}>
         <motion.div
           initial={{ x: -30, opacity: 0 }}

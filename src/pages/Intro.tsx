@@ -3,9 +3,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Flame, Maximize, Minimize, Rocket, Shield, SkipForward, Swords, Target, Users, Zap } from 'lucide-react';
 import { Logo, SpaceBackground } from '../components/ui/Basics';
+import { MotionToggle } from '../components/ui/SoundControls';
 import { Spaceship } from '../components/game/Spaceship';
 import { ABILITIES, ABILITY_ORDER, ROUNDS, TAGLINE } from '../game/constants';
-import { ABILITY_ICONS } from '../components/game/AbilityPanel';
+import { AbilityIcon } from '../components/game/AbilityPanel';
 import { useDocumentTitle, useFullscreen, useStageScale } from '../hooks/useUi';
 
 const ROUND_POINTS = [100, 150, 200, 250, 300];
@@ -211,9 +212,7 @@ export default function Intro() {
               const a = ABILITIES[k];
               return (
                 <div key={k} className="glass rounded-3xl p-5" style={{ borderColor: `${a.color}55` }}>
-                  <div className="inline-flex rounded-2xl p-3" style={{ background: `${a.color}22`, color: a.color }}>
-                    {ABILITY_ICONS[k]}
-                  </div>
+                  <AbilityIcon ability={k} size="lg" />
                   <div className="mt-3 font-display text-lg font-extrabold tracking-wider">{a.title}</div>
                   <div className="text-sm font-semibold" style={{ color: a.color }}>
                     {a.short}
@@ -325,6 +324,7 @@ export default function Intro() {
           ))}
         </div>
         <div className="flex gap-2">
+          <MotionToggle showLabel={false} className="h-full" />
           <button className="btn btn-ghost" onClick={() => void toggleFs()} title="Toʻliq ekran (F)">
             {fs ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
           </button>

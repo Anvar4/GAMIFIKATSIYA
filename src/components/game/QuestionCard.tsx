@@ -265,17 +265,17 @@ export function MatchingInput({
 export function MatchingBoard({ left, choices, reveal }: { left: string[]; choices: string[]; reveal?: string[] | null }) {
   if (reveal) {
     return (
-      <ul className="grid gap-3 xl:grid-cols-2">
+      <ul className={clsx('grid gap-2.5', left.length > 2 && 'grid-cols-2')}>
         {left.map((l, i) => (
           <motion.li
             key={i}
             initial={{ opacity: 0, x: -16 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.08 }}
-            className="flex items-center gap-3 rounded-2xl border border-arena-success/40 bg-arena-success/10 px-4 py-3 text-[1.35rem] font-semibold"
+            className="flex items-center gap-3 rounded-2xl border border-arena-success/40 bg-arena-success/10 px-4 py-2.5 text-[1.2rem] font-semibold"
           >
             <span className="min-w-0 flex-1 truncate">{l}</span>
-            <ArrowRight className="h-6 w-6 shrink-0 text-arena-success" aria-hidden />
+            <ArrowRight className="h-5 w-5 shrink-0 text-arena-success" aria-hidden />
             <span className="min-w-0 flex-1 truncate text-right text-arena-success">{reveal[i]}</span>
           </motion.li>
         ))}
@@ -283,24 +283,26 @@ export function MatchingBoard({ left, choices, reveal }: { left: string[]; choic
     );
   }
   return (
-    <div className="grid min-h-0 flex-1 grid-cols-[1.2fr_1fr] gap-5">
-      <ul className="space-y-2.5">
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
+      <ul className={clsx('grid gap-2.5', left.length > 2 && 'grid-cols-2')}>
         {left.map((l, i) => (
-          <li key={i} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-space-950/55 px-4 py-3 text-[1.35rem] font-semibold">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-arena-cyan/15 font-display text-lg font-bold text-arena-cyan">{i + 1}</span>
-            {l}
+          <li key={i} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-space-950/55 px-4 py-2.5 text-[1.2rem] font-semibold">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-arena-cyan/15 font-display text-base font-bold text-arena-cyan">{i + 1}</span>
+            <span className="min-w-0 truncate">{l}</span>
           </li>
         ))}
       </ul>
-      <div className="flex flex-col justify-center gap-2.5 rounded-2xl border border-dashed border-white/15 bg-space-950/40 p-4">
-        <div className="text-sm font-semibold uppercase tracking-[0.25em] text-arena-muted">Javoblar</div>
-        <div className="flex flex-wrap gap-2.5">
-          {choices.map((c, j) => (
-            <span key={j} className="rounded-xl border px-4 py-2 text-xl font-semibold" style={{ borderColor: `${OPTION_ACCENTS[j % OPTION_ACCENTS.length]}66`, color: OPTION_ACCENTS[j % OPTION_ACCENTS.length] }}>
-              {c}
-            </span>
-          ))}
-        </div>
+      <div className="flex flex-wrap items-center gap-2.5 rounded-2xl border border-dashed border-white/15 bg-space-950/40 px-4 py-3">
+        <span className="mr-1 text-sm font-semibold uppercase tracking-[0.25em] text-arena-muted">Javoblar</span>
+        {choices.map((c, j) => (
+          <span
+            key={j}
+            className="rounded-xl border px-3.5 py-1.5 text-lg font-semibold"
+            style={{ borderColor: `${OPTION_ACCENTS[j % OPTION_ACCENTS.length]}66`, color: OPTION_ACCENTS[j % OPTION_ACCENTS.length] }}
+          >
+            {c}
+          </span>
+        ))}
       </div>
     </div>
   );
@@ -434,12 +436,38 @@ export function StepsReveal({
   correct,
   mine,
   large,
+  compact,
 }: {
   steps: StepItem[];
   correct: number[];
   mine?: { index: number; selected: number; correct: boolean }[];
   large?: boolean;
+  /** katta ekran uchun: har bir qadam bitta qatorda */
+  compact?: boolean;
 }) {
+  if (compact) {
+    return (
+      <ol className="space-y-2">
+        {steps.map((st, i) => (
+          <motion.li
+            key={i}
+            initial={{ opacity: 0, x: -16 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.1 }}
+            className="flex items-center gap-3 rounded-2xl border border-white/10 bg-space-950/55 px-4 py-2.5"
+          >
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-arena-success/60 font-display font-bold text-arena-success">
+              {i + 1}
+            </span>
+            <span className="min-w-0 flex-1 truncate text-lg">{st.text}</span>
+            <span className="chip shrink-0 border-arena-success/50 bg-arena-success/10 px-3 py-1 text-base text-arena-success">
+              <CheckCircle2 className="h-4 w-4" /> {st.options[correct[i]] ?? '?'}
+            </span>
+          </motion.li>
+        ))}
+      </ol>
+    );
+  }
   return (
     <ol className={clsx('grid gap-2', large && 'xl:grid-cols-2')}>
       {steps.map((st, i) => {

@@ -2,6 +2,7 @@ import clsx from 'clsx';
 import { Clock, Crosshair, Eye, ShieldPlus, Zap } from 'lucide-react';
 import type { AbilityType, RoomSettings, Team, TeamAbility } from '../../game/types';
 import { ABILITIES, ABILITY_ORDER, TEAM_COLORS } from '../../game/constants';
+import { abilityImage } from '../../game/assets';
 
 export const ABILITY_ICONS: Record<AbilityType, React.ReactNode> = {
   shield_boost: <ShieldPlus className="h-5 w-5" />,
@@ -10,6 +11,21 @@ export const ABILITY_ICONS: Record<AbilityType, React.ReactNode> = {
   energy_steal: <Zap className="h-5 w-5" />,
   hint_scan: <Eye className="h-5 w-5" />,
 };
+
+/** Qobiliyat nishoni: Higgsfield rasmi boʻlsa — rasm, aks holda rangli vektor belgi */
+export function AbilityIcon({ ability, size = 'md' }: { ability: AbilityType; size?: 'md' | 'lg' }) {
+  const meta = ABILITIES[ability];
+  const img = abilityImage(ability);
+  const box = size === 'lg' ? 'h-16 w-16' : 'h-10 w-10';
+  if (img) {
+    return <img src={img} alt="" className={clsx(box, 'shrink-0 object-contain')} style={{ filter: `drop-shadow(0 0 10px ${meta.color}88)` }} decoding="async" />;
+  }
+  return (
+    <div className={clsx('flex shrink-0 items-center justify-center rounded-xl', size === 'lg' ? 'h-16 w-16 p-3' : 'h-10 w-10 p-2')} style={{ background: `${meta.color}1f`, color: meta.color }}>
+      {ABILITY_ICONS[ability]}
+    </div>
+  );
+}
 
 export interface AbilityAvailability {
   ok: boolean;
@@ -72,9 +88,7 @@ export function AbilityPanel({
             key={key}
             className={clsx('flex items-center gap-3 rounded-xl border bg-space-950/50 p-2.5', avail.ok ? 'border-white/10' : 'border-white/5 opacity-70')}
           >
-            <div className="rounded-lg p-2" style={{ background: `${meta.color}1f`, color: meta.color }}>
-              {ABILITY_ICONS[key]}
-            </div>
+            <AbilityIcon ability={key} />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="font-display text-sm font-bold tracking-wider">{meta.title}</span>

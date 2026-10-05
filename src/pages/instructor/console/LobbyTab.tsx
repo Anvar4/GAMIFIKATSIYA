@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { ArrowLeftRight, Check, CheckCheck, Circle, Lock, Rocket, RotateCcw, Shuffle, Unlock, UserX, X } from 'lucide-react';
 import { Panel, Spinner } from '../../../components/ui/Basics';
 import { RoomCodeDisplay } from '../../../components/game/RoomCodeDisplay';
+import { ShipImage } from '../../../components/game/Spaceship';
 import { useFeedback } from '../../../context/Feedback';
 import { SKINS, TEAM_COLORS } from '../../../game/constants';
 import { lobbyReadiness } from '../../../game/state';
@@ -220,7 +221,7 @@ function TeamEditor({ ctx, team, other }: { ctx: ConsoleCtx; team: Team; other: 
       }
     >
       <div className="relative -mx-4 -mt-4 mb-4 flex h-36 items-center justify-center" style={{ background: `radial-gradient(circle, ${hex}33, transparent 70%)` }}>
-        <img src={SKINS[skin].image} alt="" className="h-full object-contain" style={{ transform: team.slot === 2 ? 'scaleX(-1)' : undefined }} />
+        <ShipImage skin={skin} color={color} flip={team.slot === 2} className="h-full object-contain" />
       </div>
       <div className="space-y-3">
         <div>
@@ -260,7 +261,7 @@ function TeamEditor({ ctx, team, other }: { ctx: ConsoleCtx; team: Team; other: 
                 className={clsx('rounded-xl border bg-space-950/50 p-1.5 transition', skin === k ? 'border-arena-cyan' : 'border-white/10 hover:border-white/30')}
                 aria-pressed={skin === k}
               >
-                <img src={SKINS[k].image} alt="" className="h-10 w-full object-contain" />
+                <ShipImage skin={k} color={color} className="h-10 w-full object-contain" />
                 <div className="mt-1 text-[0.65rem] font-semibold">{SKINS[k].label}</div>
               </button>
             ))}

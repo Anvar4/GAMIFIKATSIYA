@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import type { ReactNode } from 'react';
 import type { Team } from '../../game/types';
 import { TEAM_COLORS } from '../../game/constants';
+import { BOSS_SHIP } from '../../game/assets';
 import { Spaceship } from './Spaceship';
 
 export interface BattleFx {
@@ -25,15 +26,33 @@ interface Props {
   hits: Record<1 | 2, string | null>;
   compact?: boolean;
   reducedMotion?: boolean;
+  /** 5-raund: galaktik boss jang maydoni ustida paydo boʻladi */
+  boss?: boolean;
   children?: ReactNode;
 }
 
 /** Markaziy jang maydoni: ikki kema bir-biriga qaragan, zarbalar animatsiyasi */
-export function BattleZone({ left, right, fx, hits, compact, reducedMotion, children }: Props) {
+export function BattleZone({ left, right, fx, hits, compact, reducedMotion, boss, children }: Props) {
   const slotTeam = (slot: 1 | 2) => (slot === 1 ? left : right);
   return (
     <div className="relative flex h-full w-full flex-col">
       <div className={compact ? 'relative h-[38%] min-h-[9rem] shrink-0' : 'relative flex-1'}>
+        {/* galaktik boss (5-raund) — ikkala kema orqasida */}
+        <AnimatePresence>
+          {boss && (
+            <motion.div
+              key="boss"
+              className="pointer-events-none absolute left-1/2 top-[-6%] w-[44%] -translate-x-1/2"
+              initial={{ opacity: 0, y: -40, scale: 0.8 }}
+              animate={reducedMotion ? { opacity: 0.55, y: 0, scale: 1 } : { opacity: [0.45, 0.62, 0.45], y: [0, 6, 0], scale: 1 }}
+              exit={{ opacity: 0, scale: 1.2 }}
+              transition={reducedMotion ? { duration: 0.3 } : { duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+              aria-hidden
+            >
+              <img src={BOSS_SHIP} alt="" className="w-full drop-shadow-[0_0_40px_rgba(166,107,255,0.65)]" decoding="async" />
+            </motion.div>
+          )}
+        </AnimatePresence>
         {/* kemalar */}
         <div className="absolute left-[1%] top-1/2 w-[36%] -translate-y-1/2">
           <Spaceship

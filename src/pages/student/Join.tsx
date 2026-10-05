@@ -8,7 +8,8 @@ import { ensureStudentSession, getStudentClient, studentSlot } from '../../lib/s
 import { errorMessage } from '../../lib/errors';
 import { readLocal, writeLocal } from '../../lib/storage';
 import { joinRoom, lookupRoom } from '../../services/api';
-import { SKINS, TEAM_COLORS } from '../../game/constants';
+import { TEAM_COLORS } from '../../game/constants';
+import { ShipImage } from '../../components/game/Spaceship';
 import type { RoomLookup } from '../../game/types';
 import { useDocumentTitle } from '../../hooks/useUi';
 
@@ -154,7 +155,7 @@ export default function Join() {
                             className={clsx('rounded-2xl border-2 bg-space-950/50 p-3 text-center transition disabled:opacity-40', teamId === t.id ? 'scale-[1.02]' : 'border-white/10')}
                             style={teamId === t.id ? { borderColor: c, boxShadow: `0 0 24px ${c}55` } : undefined}
                           >
-                            <img src={SKINS[t.spaceship_skin].image} alt="" className="mx-auto h-16 object-contain" style={{ transform: t.slot === 2 ? 'scaleX(-1)' : undefined }} />
+                            <ShipImage skin={t.spaceship_skin} color={t.color} flip={t.slot === 2} className="mx-auto h-16 object-contain" />
                             <div className="mt-1 font-display font-bold" style={{ color: c }}>
                               {t.name}
                             </div>

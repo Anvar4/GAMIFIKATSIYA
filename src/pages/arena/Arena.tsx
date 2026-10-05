@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import clsx from 'clsx';
 import { ArrowLeft, CheckCheck, Lock, Maximize, Minimize, PauseCircle, Users } from 'lucide-react';
 import { ConnectionBadge, ErrorState, LoadingScreen, Logo, SpaceBackground } from '../../components/ui/Basics';
-import { SoundControls } from '../../components/ui/SoundControls';
+import { MotionToggle, SoundControls } from '../../components/ui/SoundControls';
 import { TeamScoreboard, SpaceshipCard } from '../../components/game/TeamScoreboard';
 import { BattleZone, type BattleFx } from '../../components/game/BattleZone';
 import { RoundBanner } from '../../components/game/RoundBanner';
@@ -222,7 +222,15 @@ export default function Arena() {
               leading={leading === left.id}
             />
             <section className="relative min-h-0">
-              <BattleZone left={left} right={right} fx={fx} hits={hits} compact={Boolean(q) || s.room.phase === 'round_intro'} reducedMotion={reduced}>
+              <BattleZone
+                left={left}
+                right={right}
+                fx={fx}
+                hits={hits}
+                compact={Boolean(q) || s.room.phase === 'round_intro'}
+                reducedMotion={reduced}
+                boss={s.room.current_round === 5}
+              >
                 <AnimatePresence mode="wait">
                   {s.room.phase === 'round_intro' || (!q && s.room.phase !== 'round_end') ? (
                     <motion.div key={`intro-${s.room.current_round}`} className="h-full py-2" exit={{ opacity: 0 }}>
@@ -283,6 +291,7 @@ export default function Arena() {
       {/* ---------- yashirin boshqaruv ---------- */}
       <div className={clsx('fixed bottom-4 right-4 z-30 flex items-center gap-2 transition-opacity', chrome ? 'opacity-100' : 'pointer-events-none opacity-0')}>
         <SoundControls channel="arena" />
+        <MotionToggle showLabel={false} />
         <button className="btn btn-ghost btn-sm" onClick={() => void toggleFs()} title="Toʻliq ekran">
           {fs ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
         </button>
@@ -329,7 +338,14 @@ function ArenaQuestion({ s, timer }: { s: RoomSnapshot; timer: ReturnType<typeof
               </span>
             )}
           </div>
-          <h2 className="font-display text-[2.05rem] font-bold leading-tight text-arena-text">{q.question_text}</h2>
+          <h2
+            className={clsx(
+              'font-display font-bold leading-tight text-arena-text',
+              q.question_text.length > 110 ? 'text-[1.5rem]' : q.question_text.length > 70 ? 'text-[1.75rem]' : 'text-[2.05rem]',
+            )}
+          >
+            {q.question_text}
+          </h2>
         </div>
         <div className="flex flex-col items-center gap-2">
           <CountdownTimer timer={timer} size={136} />
@@ -358,7 +374,7 @@ function ArenaQuestion({ s, timer }: { s: RoomSnapshot; timer: ReturnType<typeof
           ) : q.question_type === 'multi_step' ? (
             revealed ? (
               <div className="min-h-0 overflow-y-auto pr-1 scrollbar-thin">
-                <StepsReveal steps={q.steps ?? []} correct={Array.isArray(q.correct_answer) ? q.correct_answer.map(Number) : []} large />
+                <StepsReveal steps={q.steps ?? []} correct={Array.isArray(q.correct_answer) ? q.correct_answer.map(Number) : []} compact />
               </div>
             ) : (
               <ChainProgress total={q.input_spec?.steps ?? 0} finished={q.answer_count} players={approved} />

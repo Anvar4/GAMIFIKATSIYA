@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { BookOpen, Brain, Crown, Medal, TrendingUp, Users, Zap } from 'lucide-react';
 import type { AwardKey, GameResults, Player, Team } from '../../game/types';
 import { AWARDS, AWARD_ORDER, TEAM_COLORS } from '../../game/constants';
+import { awardImage } from '../../game/assets';
 import { AnimatedNumber } from '../ui/Basics';
 import { Spaceship } from './Spaceship';
 
@@ -14,6 +15,17 @@ const AWARD_ICONS: Record<string, React.ReactNode> = {
   users: <Users className="h-6 w-6" />,
   trending: <TrendingUp className="h-6 w-6" />,
 };
+
+/** Mukofot medali: Higgsfield rasmi boʻlsa — rasm, aks holda vektor belgi */
+export function AwardIcon({ award, color }: { award: AwardKey; color: string }) {
+  const img = awardImage(award);
+  if (img) return <img src={img} alt="" className="h-14 w-14 shrink-0 object-contain" style={{ filter: `drop-shadow(0 0 12px ${color}66)` }} decoding="async" />;
+  return (
+    <div className="rounded-xl p-2" style={{ background: `${color}22`, color }}>
+      {AWARD_ICONS[AWARDS[award].icon]}
+    </div>
+  );
+}
 
 export function AwardsGrid({ results, teams, compact }: { results: GameResults; teams: Team[]; compact?: boolean }) {
   const entries = AWARD_ORDER.map((k) => [k, results.awards[k]] as const).filter(([, v]) => v);
@@ -34,9 +46,7 @@ export function AwardsGrid({ results, teams, compact }: { results: GameResults; 
             style={{ borderColor: `${color}55` }}
           >
             <div className="flex items-start gap-3">
-              <div className="rounded-xl p-2" style={{ background: `${color}22`, color }}>
-                {AWARD_ICONS[meta.icon]}
-              </div>
+              <AwardIcon award={key as AwardKey} color={color} />
               <div className="min-w-0">
                 <div className="font-display text-xs font-bold tracking-[0.2em] text-arena-warning">{meta.title}</div>
                 <div className="text-[0.7rem] text-arena-muted">{meta.subtitle}</div>
